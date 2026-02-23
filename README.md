@@ -4,7 +4,7 @@
 
 **A floating macOS dashboard for all your Claude Code sessions.**
 
-See what's working, what's done, and what needs you — at a glance. Hear it too — voice announces when sessions finish or need permission.
+See what's working, what's done, and what needs you — at a glance. Grant permissions without switching windows. Hear it too — voice announces when sessions finish or need attention.
 
 <br>
 
@@ -37,6 +37,13 @@ A tiny always-on-top panel you can drag anywhere on your screen. It shows every 
 </div>
 
 ## Features
+
+**Grant permissions remotely**
+- Allow or deny tool requests directly from the monitor — no terminal switching needed
+- Works even when the terminal window is hidden or on another Space
+- Shows the tool name, icon, and command/file path for each request
+- Three options: Allow (proceed), Deny (block), or Terminal (switch to terminal for the standard dialog)
+- Uses Unix socket IPC for instant, reliable communication with Claude Code
 
 **Voice announcements**
 - Speaks when sessions finish or need permission — no more tab-switching to check
@@ -105,6 +112,7 @@ Download the files from this repo and place them:
 | `build.sh` | `~/.claude/monitor/build.sh` |
 | `config.json` | `~/.claude/monitor/config.json` |
 | `monitor.sh` | `~/.claude/hooks/monitor.sh` |
+| `monitor_permission.py` | `~/.claude/hooks/monitor_permission.py` |
 
 Make the scripts executable:
 
@@ -148,6 +156,17 @@ Add the following to your `~/.claude/settings.json`. If you already have a `"hoo
         ]
       }
     ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $HOME/.claude/hooks/monitor_permission.py",
+            "timeout": 86400
+          }
+        ]
+      }
+    ],
     "SessionEnd": [
       {
         "hooks": [
@@ -174,9 +193,10 @@ The floating panel appears in the top-right corner. Drag to reposition — it re
 1. Start a new Claude Code session — it appears as "starting"
 2. Send a prompt — changes to "working" with a prompt preview
 3. Let Claude finish — changes to "done", voice announces
-4. Trigger a permission prompt — shows "attention", voice announces
-5. Click a session row — jumps to that terminal tab
-6. Hover a row and click X — kills that Claude Code session
+4. Trigger a permission prompt — the monitor shows Allow/Deny/Terminal buttons
+5. Click Allow — Claude Code proceeds without switching to the terminal
+6. Click a session row — jumps to that terminal tab
+7. Hover a row and click X — kills that Claude Code session
 
 ## Voice Setup
 
@@ -264,6 +284,21 @@ Click row → AppleScript activates the right Terminal/iTerm2 tab
 TTS → announces "project done" or "project needs attention"
 ```
 
+**Permission granting** uses a separate path:
+
+```
+Claude Code needs permission
+        |
+        v
+monitor_permission.py connects to Unix socket, writes .permission file
+        |
+        v
+Swift app detects .permission file → shows Allow/Deny/Terminal buttons
+        |
+        v
+User clicks Allow → app sends response through socket → Claude Code proceeds
+```
+
 Each Claude Code lifecycle event maps to a session status:
 
 | Event | Status | Voice |
@@ -271,7 +306,7 @@ Each Claude Code lifecycle event maps to a session status:
 | Session starts | `starting` | Optional (off by default) |
 | You send a prompt | `working` | No |
 | Claude finishes | `done` | Yes |
-| Claude needs permission | `attention` | Yes |
+| Claude needs permission | `attention` + Allow/Deny buttons | Yes |
 | You exit Claude Code | Removed after 5s | No |
 | Terminal tab closed | Auto-removed | No |
 
@@ -311,6 +346,8 @@ See [Troubleshooting Guide](docs/TROUBLESHOOTING.md) for detailed solutions. Qui
 | Problem | Fix |
 |---------|-----|
 | Sessions don't appear | Send a new prompt in that session to trigger the hook |
+| Permission buttons missing | Verify `PermissionRequest` hook is in `settings.json` and `monitor_permission.py` exists |
+| Allow clicked, nothing happens | Restart the monitor: `pkill -9 claude_monitor && ~/.claude/monitor/build.sh` |
 | Click doesn't switch tabs | Check that `terminal_session_id` is set in the session JSON |
 | No voice | Verify `announce.enabled` is `true` and `volume` > `0` |
 | Wrong voice | Run `say -v '?'` to find the exact voice name, update `say.voice` |
@@ -322,23 +359,25 @@ See [Troubleshooting Guide](docs/TROUBLESHOOTING.md) for detailed solutions. Qui
 ```bash
 pkill claude_monitor
 rm -rf ~/.claude/monitor
-rm ~/.claude/hooks/monitor.sh
+rm ~/.claude/hooks/monitor.sh ~/.claude/hooks/monitor_permission.py
+rm -f /tmp/claude-monitor.sock
 ```
 
-Then remove the 5 hook entries (`SessionStart`, `UserPromptSubmit`, `Stop`, `Notification`, `SessionEnd`) from `~/.claude/settings.json`.
+Then remove the 6 hook entries (`SessionStart`, `UserPromptSubmit`, `Stop`, `Notification`, `PermissionRequest`, `SessionEnd`) from `~/.claude/settings.json`.
 
 ## File Layout
 
 ```
 ~/.claude/
 ├── monitor/
-│   ├── claude_monitor.swift   # SwiftUI floating panel (~900 lines)
+│   ├── claude_monitor.swift    # SwiftUI floating panel
 │   ├── claude_monitor          # Compiled binary (after build)
 │   ├── build.sh               # Compile + launch script
 │   ├── config.json            # TTS + announcement config
-│   └── sessions/              # Session JSON files (auto-managed)
+│   └── sessions/              # Session + permission files (auto-managed)
 ├── hooks/
-│   └── monitor.sh            # Hook script — lifecycle events + TTS
+│   ├── monitor.sh             # Hook script — lifecycle events + TTS
+│   └── monitor_permission.py  # Permission hook — Unix socket IPC
 └── settings.json              # Claude Code settings (hooks go here)
 ```
 

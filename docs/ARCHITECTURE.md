@@ -4,25 +4,31 @@ Technical deep-dive into how Claude Monitor works.
 
 ## Overview
 
-Claude Monitor is two components: a **bash hook script** that captures session lifecycle events, and a **SwiftUI app** that displays them as a floating panel.
+Claude Monitor has three components: a **bash hook script** for session lifecycle events, a **Python hook script** for permission granting, and a **SwiftUI app** that displays the floating panel.
 
 ```
 ┌─────────────────────┐     JSON files      ┌────────────────────┐
 │  monitor.sh (hook)  │ ──────────────────── │  claude_monitor    │
 │                     │   ~/.claude/monitor  │  (SwiftUI app)     │
-│  - Runs on every    │   /sessions/{id}.json│                    │
-│    Claude Code event│                      │  - Polls every     │
-│  - Writes session   │                      │    500ms           │
-│    JSON             │                      │  - Floating panel  │
-│  - Triggers TTS     │                      │  - Click to switch │
-└─────────────────────┘                      └────────────────────┘
+│  - Lifecycle events │   /sessions/{id}.json│                    │
+│  - Writes session   │                      │  - Polls every     │
+│    JSON             │                      │    500ms           │
+│  - Triggers TTS     │                      │  - Floating panel  │
+└─────────────────────┘                      │  - Click to switch │
+                                             │                    │
+┌──────────────────────────┐  Unix socket    │  - Permission      │
+│  monitor_permission.py   │ ────────────────│    buttons         │
+│                          │ /tmp/claude-    │                    │
+│  - PermissionRequest hook│  monitor.sock   │                    │
+│  - Blocks until response │                 │                    │
+└──────────────────────────┘                 └────────────────────┘
 ```
 
-The two components communicate through the filesystem — no sockets, no IPC, no daemon. The hook writes JSON files; the app reads them.
+Session tracking uses the filesystem — the hook writes JSON files; the app reads them. Permission granting uses a Unix domain socket for real-time, blocking IPC.
 
 ## Hook Script (`monitor.sh`)
 
-Handles all 5 Claude Code lifecycle events:
+Handles 5 Claude Code lifecycle events (PermissionRequest is handled separately):
 
 ```bash
 monitor.sh <event>   # receives hook JSON on stdin
@@ -65,6 +71,37 @@ Two providers, same interface:
 
 Both run in the background (`&` + `disown`) to avoid blocking the hook.
 
+## Permission Hook (`monitor_permission.py`)
+
+Handles `PermissionRequest` events via Unix domain socket IPC. This is separate from `monitor.sh` because permission granting requires blocking — the hook must wait for the user's decision before returning a response to Claude Code.
+
+### Why Unix sockets?
+
+Claude Code's `PermissionRequest` hook has a race condition: if the hook takes more than ~1-2 seconds to respond, Claude Code shows its own terminal dialog regardless. File-based polling (write a file, wait for response file) is too slow. A Unix socket lets the Python hook block on `sock.recv()` and get an instant response when the user clicks a button.
+
+### Flow
+
+```
+1. Claude Code fires PermissionRequest hook
+2. monitor_permission.py starts:
+   a. Writes {session_id}.permission file (tool name, command, etc.)
+   b. Connects to /tmp/claude-monitor.sock
+   c. Sends permission details as JSON
+   d. Blocks on sock.recv() — waiting for user decision
+3. Swift app detects .permission file → shows Allow/Deny/Terminal buttons
+4. User clicks a button:
+   a. Swift app writes response JSON to the socket connection
+   b. Python hook receives it, outputs decision JSON to stdout
+   c. Claude Code reads the hook output and proceeds
+5. .permission file is cleaned up
+```
+
+### Graceful degradation
+
+If the monitor app isn't running (socket doesn't exist), the Python hook exits silently with code 0 and no output. Claude Code then falls back to its standard terminal permission dialog.
+
+The hook has a 24-hour timeout (`86400` seconds in settings.json) to allow waiting indefinitely for the user.
+
 ## SwiftUI App (`claude_monitor.swift`)
 
 Single-file SwiftUI app, compiled to a standalone binary.
@@ -74,10 +111,11 @@ Single-file SwiftUI app, compiled to a standalone binary.
 | Class | Role |
 |-------|------|
 | `SessionReader` | Polls `sessions/` directory every 500ms, decodes JSON, sorts by priority |
+| `PermissionSocketServer` | Unix domain socket server — accepts connections from permission hooks, routes responses |
 | `ConfigManager` | Reads/writes `config.json`, manages voice selection |
 | `VoiceFetcher` | Fetches ElevenLabs voice library via API |
 | `FloatingPanel` | `NSPanel` subclass — borderless, always-on-top, non-activating |
-| `ClickHostingView` | `NSHostingView` with `acceptsFirstMouse` for click-through |
+| `ClickHostingView` | `NSHostingView` with `acceptsFirstMouse` for click-through, transparent background |
 | `ThinScroller` | Custom `NSScroller` subclass for the themed scrollbar |
 
 ### Panel Behavior

@@ -102,6 +102,40 @@ The Swift compiler may show deprecation warnings. These are cosmetic and don't a
 - `launchApplication` deprecation — the code uses the modern `openApplication(at:configuration:)` API
 - `onChange(of:perform:)` — may appear on newer macOS versions
 
+## Permission buttons don't appear
+
+The Allow/Deny buttons require the `PermissionRequest` hook to be configured in `~/.claude/settings.json` with the Python script:
+
+```json
+"PermissionRequest": [
+  {
+    "hooks": [
+      {
+        "type": "command",
+        "command": "python3 $HOME/.claude/hooks/monitor_permission.py",
+        "timeout": 86400
+      }
+    ]
+  }
+]
+```
+
+Also verify `monitor_permission.py` exists at `~/.claude/hooks/monitor_permission.py`.
+
+## Permission buttons appear but clicking Allow doesn't work
+
+The monitor app communicates with the Python hook via a Unix socket at `/tmp/claude-monitor.sock`. Check:
+
+1. **Socket exists** — `ls -la /tmp/claude-monitor.sock` (created when the monitor app launches)
+2. **Monitor app is running** — `pgrep -l claude_monitor`
+3. **Restart the app** — `pkill -9 claude_monitor && ~/.claude/monitor/build.sh`
+
+If the socket doesn't exist, the monitor app failed to start its socket server. Check Console.app for `[ClaudeMonitor]` log messages.
+
+## Permission falls through to terminal dialog
+
+This can happen if the Python hook can't connect to the socket (monitor app not running) or if the connection times out. The hook is designed to fall through gracefully — Claude Code shows its standard terminal dialog as a fallback.
+
 ## Hook adds latency to Claude Code
 
-Each hook invocation adds ~10ms of overhead (mostly from the `ps` process tree walk for TTY detection). This is imperceptible in normal use. The TTS call runs in the background and doesn't block.
+Each hook invocation adds ~10ms of overhead (mostly from the `ps` process tree walk for TTY detection). This is imperceptible in normal use. The TTS call runs in the background and doesn't block. The permission hook adds no latency — it blocks independently on the socket.

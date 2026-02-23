@@ -129,7 +129,7 @@ class VoiceFetcher: ObservableObject {
             "voice_description": prompt,
             "text": "Hello. A session just finished — your project is done and ready for review. Another session needs your attention, it looks like there is a permission prompt waiting. Everything else is still running smoothly.",
             "model_id": "eleven_multilingual_ttv_v2",
-            "guidance_scale": 5,
+            "guidance_scale": 8,
             "quality": 0.9
         ]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
@@ -344,14 +344,173 @@ struct SessionInfo: Codable, Identifiable {
     }
 }
 
+// MARK: - Permission Model
+
+struct PermissionInfo: Codable {
+    let tool_name: String
+    let display: String
+    let tool_input: String
+    let timestamp: String
+    let pid: String?  // legacy, kept for decode compat
+
+    var toolIcon: String {
+        switch tool_name {
+        case "Bash":  return "terminal"
+        case "Edit":  return "pencil"
+        case "Write": return "doc.badge.plus"
+        case "Read":  return "doc.text"
+        case "Glob":  return "magnifyingglass"
+        case "Grep":  return "text.magnifyingglass"
+        default:      return "gearshape"
+        }
+    }
+}
+
+// MARK: - Permission Socket Server
+
+class PermissionSocketServer {
+    static let shared = PermissionSocketServer()
+    private let socketPath = "/tmp/claude-monitor.sock"
+    private var serverFd: Int32 = -1
+    private let queue = DispatchQueue(label: "monitor.socket", qos: .userInteractive)
+    // Map session_id -> client file descriptor (kept open, waiting for response)
+    private var pendingClients: [String: Int32] = [:]
+    private let lock = NSLock()
+
+    func start() {
+        // Clean up stale socket
+        unlink(socketPath)
+
+        serverFd = socket(AF_UNIX, SOCK_STREAM, 0)
+        guard serverFd >= 0 else {
+            NSLog("[ClaudeMonitor] Socket: failed to create socket")
+            return
+        }
+
+        var addr = sockaddr_un()
+        addr.sun_family = sa_family_t(AF_UNIX)
+        socketPath.withCString { cstr in
+            withUnsafeMutablePointer(to: &addr.sun_path) { ptr in
+                let raw = UnsafeMutableRawPointer(ptr)
+                raw.copyMemory(from: cstr, byteCount: min(strlen(cstr) + 1, 104))
+            }
+        }
+
+        let bindResult = withUnsafePointer(to: &addr) { ptr in
+            ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockPtr in
+                bind(serverFd, sockPtr, socklen_t(MemoryLayout<sockaddr_un>.size))
+            }
+        }
+        guard bindResult == 0 else {
+            NSLog("[ClaudeMonitor] Socket: bind failed: %d", errno)
+            Darwin.close(serverFd)
+            return
+        }
+
+        guard listen(serverFd, 5) == 0 else {
+            NSLog("[ClaudeMonitor] Socket: listen failed")
+            Darwin.close(serverFd)
+            return
+        }
+
+        NSLog("[ClaudeMonitor] Socket: listening on %@", socketPath)
+
+        // Accept connections in background
+        queue.async { [weak self] in
+            self?.acceptLoop()
+        }
+    }
+
+    private func acceptLoop() {
+        while serverFd >= 0 {
+            var clientAddr = sockaddr_un()
+            var clientLen = socklen_t(MemoryLayout<sockaddr_un>.size)
+            let clientFd = withUnsafeMutablePointer(to: &clientAddr) { ptr in
+                ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockPtr in
+                    accept(serverFd, sockPtr, &clientLen)
+                }
+            }
+            guard clientFd >= 0 else { continue }
+
+            // Handle each client in its own dispatch
+            DispatchQueue.global(qos: .userInteractive).async { [weak self] in
+                self?.handleClient(fd: clientFd)
+            }
+        }
+    }
+
+    private func handleClient(fd: Int32) {
+        // Read the request
+        var buffer = [UInt8](repeating: 0, count: 8192)
+        let bytesRead = read(fd, &buffer, buffer.count)
+        guard bytesRead > 0 else {
+            Darwin.close(fd)
+            return
+        }
+
+        let data = Data(buffer[0..<bytesRead])
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let type = json["type"] as? String,
+              type == "permission_request",
+              let sessionId = json["session_id"] as? String else {
+            Darwin.close(fd)
+            return
+        }
+
+        NSLog("[ClaudeMonitor] Socket: permission request from session %@", sessionId)
+
+        // Store the client fd — keep the connection open until user responds
+        lock.lock()
+        // Close any existing pending client for this session
+        if let old = pendingClients[sessionId] {
+            Darwin.close(old)
+        }
+        pendingClients[sessionId] = fd
+        lock.unlock()
+    }
+
+    func respond(sessionId: String, decision: String) {
+        lock.lock()
+        guard let fd = pendingClients.removeValue(forKey: sessionId) else {
+            lock.unlock()
+            NSLog("[ClaudeMonitor] Socket: no pending client for session %@", sessionId)
+            return
+        }
+        lock.unlock()
+
+        let response = "{\"decision\":\"\(decision)\"}"
+        let bytes = Array(response.utf8)
+        bytes.withUnsafeBufferPointer { ptr in
+            _ = write(fd, ptr.baseAddress!, ptr.count)
+        }
+        Darwin.close(fd)
+        NSLog("[ClaudeMonitor] Socket: sent %@ to session %@", decision, sessionId)
+    }
+
+    func stop() {
+        if serverFd >= 0 {
+            Darwin.close(serverFd)
+            serverFd = -1
+        }
+        unlink(socketPath)
+        lock.lock()
+        for (_, fd) in pendingClients {
+            Darwin.close(fd)
+        }
+        pendingClients.removeAll()
+        lock.unlock()
+    }
+}
+
 // MARK: - Session Reader (polls directory)
 
 class SessionReader: ObservableObject {
     @Published var sessions: [SessionInfo] = []
+    @Published var permissions: [String: PermissionInfo] = [:]
     private var timer: Timer?
     private var livenessTimer: Timer?
 
-    private let sessionsDir: String = {
+    let sessionsDir: String = {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         return "\(home)/.claude/monitor/sessions"
     }()
@@ -364,6 +523,15 @@ class SessionReader: ObservableObject {
         livenessTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
             self?.pruneDeadSessions()
         }
+    }
+
+    func respondToPermission(sessionId: String, decision: String) {
+        // Send response through the socket server
+        PermissionSocketServer.shared.respond(sessionId: sessionId, decision: decision)
+
+        // Remove the permission card
+        let permFile = "\(sessionsDir)/\(sessionId).permission"
+        try? FileManager.default.removeItem(atPath: permFile)
     }
 
     /// Remove session files whose TTY no longer has any processes (terminal tab closed)
@@ -408,6 +576,8 @@ class SessionReader: ObservableObject {
                         for sid in sids {
                             let path = "\(self.sessionsDir)/\(sid).json"
                             try? FileManager.default.removeItem(atPath: path)
+                            // Clean up orphaned permission files
+                            try? FileManager.default.removeItem(atPath: "\(self.sessionsDir)/\(sid).permission")
                             NSLog("[ClaudeMonitor] Pruned session %@ — TTY %@ gone", sid, tty)
                         }
                     }
@@ -419,19 +589,30 @@ class SessionReader: ObservableObject {
     func readSessions() {
         let fm = FileManager.default
         guard let files = try? fm.contentsOfDirectory(atPath: sessionsDir) else {
-            DispatchQueue.main.async { self.sessions = [] }
+            DispatchQueue.main.async { self.sessions = []; self.permissions = [:] }
             return
         }
 
         var loaded: [SessionInfo] = []
-        for file in files where file.hasSuffix(".json") {
-            let path = "\(sessionsDir)/\(file)"
-            guard let data = fm.contents(atPath: path) else { continue }
-            do {
-                let session = try JSONDecoder().decode(SessionInfo.self, from: data)
-                loaded.append(session)
-            } catch {
-                NSLog("[ClaudeMonitor] Failed to decode %@: %@", file, error.localizedDescription)
+        var loadedPerms: [String: PermissionInfo] = [:]
+
+        for file in files {
+            if file.hasSuffix(".json") {
+                let path = "\(sessionsDir)/\(file)"
+                guard let data = fm.contents(atPath: path) else { continue }
+                do {
+                    let session = try JSONDecoder().decode(SessionInfo.self, from: data)
+                    loaded.append(session)
+                } catch {
+                    NSLog("[ClaudeMonitor] Failed to decode %@: %@", file, error.localizedDescription)
+                }
+            } else if file.hasSuffix(".permission") {
+                let sessionId = String(file.dropLast(".permission".count))
+                let path = "\(sessionsDir)/\(file)"
+                guard let data = fm.contents(atPath: path) else { continue }
+                if let perm = try? JSONDecoder().decode(PermissionInfo.self, from: data) {
+                    loadedPerms[sessionId] = perm
+                }
             }
         }
 
@@ -441,6 +622,7 @@ class SessionReader: ObservableObject {
 
         DispatchQueue.main.async {
             self.sessions = loaded
+            self.permissions = loadedPerms
         }
     }
 
@@ -701,6 +883,121 @@ struct SessionRowView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .onHover { isHovered = $0 }
+    }
+}
+
+// MARK: - Permission Action View
+
+struct PermissionActionView: View {
+    let permission: PermissionInfo
+    let sessionId: String
+    let reader: SessionReader
+    let onTerminal: () -> Void
+    @State private var responding: String? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            // Tool name header with icon
+            HStack(spacing: 5) {
+                Image(systemName: permission.toolIcon)
+                    .font(.system(size: 10))
+                    .foregroundColor(.orange)
+                Text(permission.tool_name)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.orange)
+            }
+
+            // Command/detail text
+            Text(permission.display)
+                .font(.system(size: 10, design: .monospaced))
+                .foregroundColor(.white.opacity(0.7))
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .help(permission.display)
+
+            if let action = responding {
+                // Processing indicator
+                HStack(spacing: 6) {
+                    PulsingDot(color: action == "allow" ? .green : action == "deny" ? .red : .gray, isPulsing: true)
+                    Text(action == "allow" ? "Allowing..." : action == "deny" ? "Denying..." : "Switching...")
+                        .font(.system(size: 10))
+                        .foregroundColor(.white.opacity(0.4))
+                }
+            } else {
+            // Action buttons
+            HStack(spacing: 8) {
+                Button {
+                    responding = "allow"
+                    reader.respondToPermission(sessionId: sessionId, decision: "allow")
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 9, weight: .bold))
+                        Text("Allow")
+                            .font(.system(size: 10, weight: .medium))
+                    }
+                    .foregroundColor(.white.opacity(0.5))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.green.opacity(0.4))
+                    )
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    responding = "deny"
+                    reader.respondToPermission(sessionId: sessionId, decision: "deny")
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 9, weight: .bold))
+                        Text("Deny")
+                            .font(.system(size: 10, weight: .medium))
+                    }
+                    .foregroundColor(.white.opacity(0.5))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.red.opacity(0.4))
+                    )
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    responding = "terminal"
+                    reader.respondToPermission(sessionId: sessionId, decision: "terminal")
+                    onTerminal()
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "arrow.right.square")
+                            .font(.system(size: 9))
+                        Text("Terminal")
+                            .font(.system(size: 10, weight: .medium))
+                    }
+                    .foregroundColor(.white.opacity(0.5))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.white.opacity(0.15))
+                    )
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                Spacer()
+            }
+            } // else
+        }
+        .padding(.leading, 28)
+        .padding(.trailing, 12)
+        .padding(.vertical, 6)
+        .background(Color.orange.opacity(0.05))
     }
 }
 
@@ -1002,6 +1299,16 @@ struct MonitorContentView: View {
                                     .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
+
+                            if let perm = reader.permissions[session.id] {
+                                PermissionActionView(
+                                    permission: perm,
+                                    sessionId: session.id,
+                                    reader: reader,
+                                    onTerminal: { switchToSession(session) }
+                                )
+                            }
+
                             if session.id != reader.sessions.last?.id {
                                 Divider()
                                     .background(Color.white.opacity(0.05))
@@ -1018,8 +1325,8 @@ struct MonitorContentView: View {
         .fixedSize(horizontal: false, vertical: true)
         .background(
             VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
         )
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
@@ -1144,6 +1451,16 @@ class FloatingPanel: NSPanel {
 
 class ClickHostingView<Content: View>: NSHostingView<Content> {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override var isOpaque: Bool { false }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        // Ensure no default background peeks through rounded corners
+        wantsLayer = true
+        layer?.backgroundColor = .clear
+        layer?.cornerRadius = 12
+        layer?.masksToBounds = true
+    }
 }
 
 // MARK: - Window Drag Handle (NSViewRepresentable)
@@ -1171,6 +1488,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
+        // Start the Unix socket server for permission responses
+        PermissionSocketServer.shared.start()
+
         panel = FloatingPanel()
 
         let hostingView = ClickHostingView(
@@ -1191,11 +1511,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] newSize in
                 guard let self = self, let panel = self.panel else { return }
                 let origin = panel.frame.origin
-                // Grow downward from top edge
+                // Grow downward from top edge, lock width to prevent horizontal shift
                 let topY = origin.y + panel.frame.height
+                let lockedWidth = panel.frame.width
                 let newOrigin = NSPoint(x: origin.x, y: topY - newSize.height)
                 panel.setFrame(
-                    NSRect(origin: newOrigin, size: newSize),
+                    NSRect(origin: newOrigin, size: NSSize(width: lockedWidth, height: newSize.height)),
                     display: true,
                     animate: false
                 )

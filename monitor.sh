@@ -1,7 +1,8 @@
 #!/bin/bash
 # ~/.claude/hooks/monitor.sh
 # Claude Code lifecycle hook — writes session JSON + triggers TTS
-# Called by all 5 hook events: SessionStart, UserPromptSubmit, Stop, Notification, SessionEnd
+# Called by 5 hook events: SessionStart, UserPromptSubmit, Stop, Notification, SessionEnd
+# (PermissionRequest is handled separately by monitor_permission.py)
 #
 # Usage: monitor.sh <event>
 # Receives hook JSON on stdin
@@ -230,7 +231,9 @@ case "$EVENT" in
         else
             create_session "attention"
         fi
-        if should_announce attention; then
+        # Only announce if PermissionRequest isn't actively handling this
+        PERM_FILE="$SESSIONS_DIR/${SESSION_ID}.permission"
+        if [ ! -f "$PERM_FILE" ] && should_announce attention; then
             announce "$PROJECT_NAME needs attention" &
         fi
         ;;
