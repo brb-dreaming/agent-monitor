@@ -529,9 +529,15 @@ class SessionReader: ObservableObject {
         // Send response through the socket server
         PermissionSocketServer.shared.respond(sessionId: sessionId, decision: decision)
 
-        // Remove the permission card
+        // Remove the permission card (delay for "terminal" so Claude Code can show its dialog)
         let permFile = "\(sessionsDir)/\(sessionId).permission"
-        try? FileManager.default.removeItem(atPath: permFile)
+        if decision == "terminal" {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                try? FileManager.default.removeItem(atPath: permFile)
+            }
+        } else {
+            try? FileManager.default.removeItem(atPath: permFile)
+        }
     }
 
     /// Remove session files whose TTY no longer has any processes (terminal tab closed)
@@ -1511,12 +1517,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] newSize in
                 guard let self = self, let panel = self.panel else { return }
                 let origin = panel.frame.origin
-                // Grow downward from top edge, lock width to prevent horizontal shift
+                // Grow downward from top edge, width always fixed at 280
                 let topY = origin.y + panel.frame.height
-                let lockedWidth = panel.frame.width
                 let newOrigin = NSPoint(x: origin.x, y: topY - newSize.height)
                 panel.setFrame(
-                    NSRect(origin: newOrigin, size: NSSize(width: lockedWidth, height: newSize.height)),
+                    NSRect(origin: newOrigin, size: NSSize(width: 280, height: newSize.height)),
                     display: true,
                     animate: false
                 )

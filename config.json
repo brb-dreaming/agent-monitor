@@ -1,23 +1,33 @@
 {
-  "tts_provider": "say",
-  "elevenlabs": {
-    "env_file": "~/.env",
-    "model": "eleven_multilingual_v2",
-    "stability": 0.5,
-    "similarity_boost": 0.75,
-    "voice_design_prompt": "Soft, androgynous male voice with a clear synthetic quality. Mid-high register, slightly compressed and even-toned, like speech generated inside a small electronic device. Warm but distinctly artificial. There's a digital texture to the voice, a subtle uniformity in how syllables are delivered. Pacing is measured and slightly mechanical, with deliberate pauses between phrases that feel like processing rather than breathing. Pitch stays in a narrow, pleasant range — no dramatic rises or falls. Despite the robotic cadence, the voice carries quiet sincerity and curiosity. It sounds like a machine that genuinely cares. Consonants are crisp and precise, vowels are slightly flattened. No breathiness, no vocal fry, no attempt to sound human. The warmth comes from the words and intention, not the vocal quality itself.",
-    "voice_design_name": "human robot"
+  "announce" : {
+    "enabled" : true,
+    "on_attention" : true,
+    "on_done" : true,
+    "on_start" : false,
+    "volume" : 0.5
   },
-  "say": {
-    "voice": "Zoe (Premium)",
-    "rate": 200
+  "elevenlabs" : {
+    "env_file" : "~\/Projects\/Claude\/projects\/life-copilot\/.env",
+    "model" : "eleven_multilingual_v2",
+    "similarity_boost" : 0.75,
+    "stability" : 0.5,
+    "voice_design_name" : "claude-monitor",
+    "voice_design_prompt" : "Soft, androgynous male voice with a clear synthetic quality. Mid-high register, slightly compressed and even-toned, like speech generated inside a small electronic device. Warm but distinctly artificial. There's a digital texture to the voice, a subtle uniformity in how syllables are delivered. Pacing is measured and slightly mechanical, with deliberate pauses between phrases that feel like processing rather than breathing. Pitch stays in a narrow, pleasant range — no dramatic rises or falls. Despite the robotic cadence, the voice carries quiet sincerity and curiosity. It sounds like a machine that genuinely cares. Consonants are crisp and precise, vowels are slightly flattened. No breathiness, no vocal fry, no attempt to sound human. The warmth comes from the words and intention, not the vocal quality itself.",
+    "voice_id" : "D3R2bb2JNcN2aFfwe3S0"
   },
-  "announce": {
-    "enabled": true,
-    "on_done": true,
-    "on_attention": true,
-    "on_start": false,
-    "volume": 0.5
+  "say" : {
+    "rate" : 200,
+    "voice" : "Zoe (Premium)"
   },
-  "voices": []
+  "tts_provider" : "elevenlabs",
+  "voices" : [
+    {
+      "id" : "D3R2bb2JNcN2aFfwe3S0",
+      "name" : "human robot"
+    },
+    {
+      "id" : "d4iKE4H64IK5ZrLbNio7",
+      "name" : "claude-monitor"
+    }
+  ]
 }
