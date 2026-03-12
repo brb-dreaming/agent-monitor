@@ -11,17 +11,24 @@ Claude Monitor has three components: a **bash hook script** for session lifecycl
 │  monitor.sh (hook)  │ ──────────────────── │  claude_monitor    │
 │                     │   ~/.claude/monitor  │  (SwiftUI app)     │
 │  - Lifecycle events │   /sessions/{id}.json│                    │
-│  - Writes session   │                      │  - Polls every     │
-│    JSON             │                      │    500ms           │
+│  - Writes session   │                      │  - Polls sessions  │
+│    JSON             │                      │    every 500ms     │
 │  - Triggers TTS     │                      │  - Floating panel  │
 └─────────────────────┘                      │  - Click to switch │
                                              │                    │
 ┌──────────────────────────┐  Unix socket    │  - Permission      │
 │  monitor_permission.py   │ ────────────────│    buttons         │
 │                          │ /tmp/claude-    │                    │
-│  - PermissionRequest hook│  monitor.sock   │                    │
-│  - Blocks until response │                 │                    │
-└──────────────────────────┘                 └────────────────────┘
+│  - PermissionRequest hook│  monitor.sock   │  - Usage quota     │
+│  - Blocks until response │                 │    tracking        │
+└──────────────────────────┘                 └────────┬───────────┘
+                                                      │
+                                  Keychain + OAuth API │ (every 5min)
+                                                      │
+                                             ┌────────▼───────────┐
+                                             │  Anthropic API     │
+                                             │  /api/oauth/usage  │
+                                             └────────────────────┘
 ```
 
 Session tracking uses the filesystem — the hook writes JSON files; the app reads them. Permission granting uses a Unix domain socket for real-time, blocking IPC.
@@ -112,6 +119,7 @@ Single-file SwiftUI app, compiled to a standalone binary.
 |-------|------|
 | `SessionReader` | Polls `sessions/` directory every 500ms, decodes JSON, sorts by priority |
 | `PermissionSocketServer` | Unix domain socket server — accepts connections from permission hooks, routes responses |
+| `UsageFetcher` | Reads OAuth credentials from Keychain/file, polls Anthropic usage API, caches token + data |
 | `ConfigManager` | Reads/writes `config.json`, manages voice selection |
 | `VoiceFetcher` | Fetches ElevenLabs voice library via API |
 | `FloatingPanel` | `NSPanel` subclass — borderless, always-on-top, non-activating |
@@ -179,3 +187,90 @@ When killing a session:
 ```
 
 The decoder uses `decodeIfPresent` with defaults for all fields except `session_id`, making it resilient to schema changes or partial writes.
+
+## Usage Quota Fetcher (`UsageFetcher`)
+
+Tracks Claude Code usage limits by polling the Anthropic OAuth usage API.
+
+### Credential Reading
+
+The fetcher reads OAuth credentials from two sources (tried in order):
+
+1. **File** — `~/.claude/.credentials.json` (some installs use this)
+2. **macOS Keychain** — service `Claude Code-credentials`, via `SecItemCopyMatching`
+
+The Keychain blob is a JSON object with credentials nested under `claudeAiOauth`:
+
+```json
+{
+  "claudeAiOauth": {
+    "accessToken": "sk-ant-oat01-...",
+    "refreshToken": "...",
+    "expiresAt": 1773284247432,
+    "scopes": ["user:inference", "user:profile", ...],
+    "rateLimitTier": "..."
+  }
+}
+```
+
+The token and expiry are **cached in memory** after the first read. The Keychain is only accessed again when the cached token is within 60 seconds of expiring. This avoids repeated macOS Keychain permission prompts (the binary is not code-signed with Keychain entitlements, so macOS prompts the user on each `SecItemCopyMatching` call until "Always Allow" is granted).
+
+### API Endpoint
+
+```
+GET https://api.anthropic.com/api/oauth/usage
+Authorization: Bearer <access_token>
+anthropic-beta: oauth-2025-04-20
+```
+
+Response:
+
+```json
+{
+  "five_hour": { "utilization": 42.0, "resets_at": "2026-03-11T22:00:00Z" },
+  "seven_day": { "utilization": 15.0, "resets_at": "2026-03-14T00:00:00Z" },
+  "seven_day_opus": { "utilization": 5.0, "resets_at": "..." },
+  "seven_day_sonnet": { "utilization": 10.0, "resets_at": "..." },
+  "extra_usage": {
+    "is_enabled": true,
+    "monthly_limit": 10000,
+    "used_credits": 250,
+    "utilization": 2.5,
+    "currency": "USD"
+  }
+}
+```
+
+- `utilization` is 0-100 (percentage)
+- `resets_at` is ISO 8601
+- `extra_usage` amounts are in **cents** (divided by 100 for display)
+- All fields are optional — missing windows are simply not displayed
+
+### Polling and Rate Limit Handling
+
+| Behavior | Value |
+|----------|-------|
+| Default poll interval | 5 minutes |
+| Minimum fetch gap (popover open) | 2 minutes — stale data is shown rather than re-fetching |
+| On HTTP 429 | Exponential backoff: double the interval, cap at 15 minutes |
+| On HTTP 401 | Clear cached token, next fetch re-reads Keychain |
+| On success after backoff | Reset interval to 5 minutes |
+
+### UI
+
+- **Bar chart icon** in the header bar, between session count and gear icon
+- Icon **tints** to reflect the worst quota status (green/yellow/red)
+- Clicking opens a popover with progress bars, reset countdowns, and optional credit tracking
+- Manual refresh button in the popover triggers an immediate fetch (respects the 2-minute gap)
+
+## Collapsible Panel
+
+The panel header includes a **chevron toggle** (▶/▼) that collapses the session list, leaving only the header bar visible. This state is persisted in `UserDefaults` under the key `monitorExpanded`.
+
+When collapsed, the header still shows:
+- Status summary dots (orange/cyan/green counts)
+- Total session count
+- Usage icon (with quota-aware tinting)
+- Settings gear icon
+
+The panel auto-resizes via the existing `fittingSize` KVO observer, so collapsing smoothly shrinks the panel to header height.

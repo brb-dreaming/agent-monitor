@@ -14,6 +14,7 @@ swiftc "$SWIFT_FILE" \
     -framework Cocoa \
     -framework SwiftUI \
     -framework Combine \
+    -framework Security \
     -parse-as-library \
     -suppress-warnings \
     2>&1

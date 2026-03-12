@@ -107,6 +107,49 @@ The API key is used for:
 - Fetching your voice library (for the voice picker in settings)
 - Resolving voice names when pasting a voice ID
 
+## Header Bar Controls
+
+The panel header bar contains the following controls (left to right):
+
+| Control | Icon | Description |
+|---------|------|-------------|
+| Collapse toggle | ▶ / ▼ | Click to collapse/expand the session list. State persists across restarts |
+| Status summary | colored dots | Counts of attention (orange), working (cyan), and done (green) sessions |
+| Session count | number | Total active sessions |
+| Usage | 📊 | Opens the usage quota popover. Icon tints green/yellow/red based on worst quota |
+| Settings | ⚙️ | Opens the settings popover |
+
+## Usage Popover
+
+Click the bar chart icon (📊) in the header to see your Claude Code quota:
+
+- **Session (5h)** — progress bar + reset countdown for the rolling 5-hour usage window
+- **Weekly (7d)** — progress bar + reset countdown for the rolling 7-day window
+- **Per-model breakdown** — Opus and Sonnet usage shown separately when non-zero
+- **Credits** — extra usage spend vs. limit, shown when enabled on your plan
+- **Refresh button** — manually triggers a fetch (rate-limited to once per 2 minutes)
+
+### How credentials are read
+
+The usage feature requires an OAuth token from Claude Code. It reads credentials automatically from:
+
+1. `~/.claude/.credentials.json` (if it exists)
+2. macOS Keychain — service `Claude Code-credentials`
+
+The token is **cached in memory** after the first read. The Keychain is only accessed again when the token approaches expiry. On the first access, macOS will prompt you to allow `claude_monitor` to read the credential — click **Always Allow** to avoid future prompts.
+
+If you see "No credentials", make sure you're logged in to Claude Code via OAuth (`claude login`).
+
+### Polling behavior
+
+| Setting | Value |
+|---------|-------|
+| Poll interval | Every 5 minutes |
+| Popover open | Re-fetches only if last data is > 2 minutes old |
+| On rate limit (429) | Backs off: 5min → 10min → 15min (cap) |
+| On auth failure (401) | Clears cached token, retries on next poll |
+| On success after backoff | Resets to 5 minutes |
+
 ## Settings Popover
 
 Click the gear icon in the panel header to access settings at runtime:

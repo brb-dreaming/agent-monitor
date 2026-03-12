@@ -1,6 +1,7 @@
 import Cocoa
 import SwiftUI
 import Combine
+import Security
 
 // MARK: - Config Manager
 
@@ -260,6 +261,231 @@ class ConfigManager: ObservableObject {
             config?.voices = voices
             save()
         }
+    }
+}
+
+// MARK: - Usage Data Model
+
+struct UsageWindow: Codable {
+    let utilization: Double
+    let resets_at: String
+
+    var utilizationPercent: Double { min(utilization, 100) }
+
+    var resetsAtDate: Date? {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = f.date(from: resets_at) { return d }
+        f.formatOptions = [.withInternetDateTime]
+        return f.date(from: resets_at)
+    }
+
+    var resetCountdown: String {
+        guard let target = resetsAtDate else { return "" }
+        let remaining = target.timeIntervalSince(Date())
+        guard remaining > 0 else { return "now" }
+        let days = Int(remaining / 86400)
+        let hours = Int((remaining.truncatingRemainder(dividingBy: 86400)) / 3600)
+        let mins = Int((remaining.truncatingRemainder(dividingBy: 3600)) / 60)
+        if days > 0 { return "\(days)d \(hours)h" }
+        if hours > 0 { return "\(hours)h \(mins)m" }
+        return "\(mins)m"
+    }
+
+    var barColor: Color {
+        if utilizationPercent > 80 { return .red }
+        if utilizationPercent > 50 { return .yellow }
+        return .green
+    }
+}
+
+struct ExtraUsageInfo: Codable {
+    let is_enabled: Bool?
+    let monthly_limit: Double?
+    let used_credits: Double?
+    let utilization: Double?
+    let currency: String?
+
+    var usedDollars: Double { (used_credits ?? 0) / 100.0 }
+    var limitDollars: Double { (monthly_limit ?? 0) / 100.0 }
+}
+
+struct UsageResponse: Codable {
+    let five_hour: UsageWindow?
+    let seven_day: UsageWindow?
+    let seven_day_sonnet: UsageWindow?
+    let seven_day_opus: UsageWindow?
+    let extra_usage: ExtraUsageInfo?
+}
+
+// MARK: - Usage Fetcher
+
+class UsageFetcher: ObservableObject {
+    @Published var usage: UsageResponse?
+    @Published var error: String?
+    @Published var lastFetched: Date?
+    private var timer: Timer?
+    private var pollInterval: TimeInterval = 300 // 5 minutes
+    private let maxPollInterval: TimeInterval = 900 // 15 minutes
+    private let minFetchGap: TimeInterval = 120 // 2 minutes — won't re-fetch if younger
+
+    // Cached credentials — read from Keychain once, reuse until expired
+    private var cachedToken: String?
+    private var tokenExpiresAt: Date?
+
+    private let credentialsPath: String = {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        return "\(home)/.claude/.credentials.json"
+    }()
+
+    init() {
+        fetch()
+        schedulePoll()
+    }
+
+    private func schedulePoll() {
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: false) { [weak self] _ in
+            self?.fetch()
+            self?.schedulePoll()
+        }
+    }
+
+    /// Called on popover open — skips if data is fresh
+    func fetchIfStale() {
+        if let last = lastFetched, Date().timeIntervalSince(last) < minFetchGap { return }
+        fetch()
+    }
+
+    func fetch() {
+        guard let token = getToken() else {
+            DispatchQueue.main.async { self.error = "No credentials" }
+            return
+        }
+
+        guard let url = URL(string: "https://api.anthropic.com/api/oauth/usage") else { return }
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
+        request.setValue("claude-monitor/1.0", forHTTPHeaderField: "User-Agent")
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, err in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                if let err = err {
+                    self.error = err.localizedDescription
+                    return
+                }
+                guard let data = data else {
+                    self.error = "No data"
+                    return
+                }
+                if let httpResponse = response as? HTTPURLResponse {
+                    if httpResponse.statusCode == 429 {
+                        // Back off: double poll interval, cap at max
+                        self.pollInterval = min(self.pollInterval * 2, self.maxPollInterval)
+                        self.schedulePoll()
+                        self.error = "Rate limited — backing off to \(Int(self.pollInterval / 60))m"
+                        NSLog("[ClaudeMonitor] Usage 429 — poll interval now %.0fs", self.pollInterval)
+                        return
+                    }
+                    if httpResponse.statusCode == 401 {
+                        // Token might be stale — clear cache so next fetch re-reads Keychain
+                        self.cachedToken = nil
+                        self.tokenExpiresAt = nil
+                        self.error = "Auth expired"
+                        return
+                    }
+                    if httpResponse.statusCode != 200 {
+                        self.error = "HTTP \(httpResponse.statusCode)"
+                        return
+                    }
+                }
+                do {
+                    let decoded = try JSONDecoder().decode(UsageResponse.self, from: data)
+                    self.usage = decoded
+                    self.error = nil
+                    self.lastFetched = Date()
+                    // Reset poll interval on success
+                    if self.pollInterval != 300 {
+                        self.pollInterval = 300
+                        self.schedulePoll()
+                    }
+                } catch {
+                    self.error = "Parse error"
+                    NSLog("[ClaudeMonitor] Usage parse error: %@", error.localizedDescription)
+                }
+            }
+        }.resume()
+    }
+
+    // MARK: - Token management (cached, read Keychain at most once per expiry cycle)
+
+    private func getToken() -> String? {
+        // Return cached token if still valid (with 60s buffer)
+        if let token = cachedToken, let expires = tokenExpiresAt, expires.timeIntervalSinceNow > 60 {
+            return token
+        }
+        // Need to read fresh credentials
+        cachedToken = nil
+        tokenExpiresAt = nil
+
+        // Try credentials file first
+        if let data = FileManager.default.contents(atPath: credentialsPath),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            if let (token, expiry) = extractCredentials(from: json) {
+                cachedToken = token
+                tokenExpiresAt = expiry
+                return token
+            }
+        }
+        // Fall back to macOS Keychain (single read, then cached)
+        return readFromKeychain()
+    }
+
+    private func readFromKeychain() -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "Claude Code-credentials",
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess, let data = result as? Data,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        if let (token, expiry) = extractCredentials(from: json) {
+            cachedToken = token
+            tokenExpiresAt = expiry
+            return token
+        }
+        return nil
+    }
+
+    /// Returns (accessToken, expiresAt) from either top-level or nested claudeAiOauth
+    private func extractCredentials(from json: [String: Any]) -> (String, Date?)? {
+        // Try top-level
+        if let token = json["accessToken"] as? String ?? json["access_token"] as? String {
+            let expiry = parseExpiry(json["expiresAt"])
+            return (token, expiry)
+        }
+        // Try nested claudeAiOauth
+        if let oauth = json["claudeAiOauth"] as? [String: Any],
+           let token = oauth["accessToken"] as? String ?? oauth["access_token"] as? String {
+            let expiry = parseExpiry(oauth["expiresAt"])
+            return (token, expiry)
+        }
+        return nil
+    }
+
+    private func parseExpiry(_ value: Any?) -> Date? {
+        // expiresAt is milliseconds since epoch
+        if let ms = value as? Double { return Date(timeIntervalSince1970: ms / 1000) }
+        if let ms = value as? Int { return Date(timeIntervalSince1970: Double(ms) / 1000) }
+        if let s = value as? String, let ms = Double(s) { return Date(timeIntervalSince1970: ms / 1000) }
+        return nil
     }
 }
 
@@ -842,12 +1068,12 @@ struct SessionRowView: View {
 
                     Text(session.status)
                         .font(.system(size: 9, weight: .medium, design: .monospaced))
-                        .foregroundColor(session.statusColor.opacity(session.isStale ? 0.5 : 0.8))
+                        .foregroundColor(session.statusColor.opacity(session.isStale ? 0.6 : 1.0))
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1)
                         .background(
                             Capsule()
-                                .fill(session.statusColor.opacity(session.isStale ? 0.05 : 0.15))
+                                .fill(session.statusColor.opacity(session.isStale ? 0.15 : 0.3))
                         )
 
                     Spacer()
@@ -1208,11 +1434,145 @@ struct SettingsPopover: View {
     }
 }
 
+// MARK: - Usage Popover
+
+struct UsageBarView: View {
+    let label: String
+    let window: UsageWindow
+    let compact: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack {
+                Text(label)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.white.opacity(0.6))
+                Spacer()
+                Text("\(Int(window.utilizationPercent))%")
+                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                    .foregroundColor(window.barColor)
+            }
+
+            // Bar
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Color.white.opacity(0.08))
+                        .frame(height: 4)
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(window.barColor)
+                        .frame(width: max(geo.size.width * window.utilizationPercent / 100, 2), height: 4)
+                }
+            }
+            .frame(height: 4)
+
+            if !compact {
+                Text("resets \(window.resetCountdown)")
+                    .font(.system(size: 9, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.3))
+            }
+        }
+    }
+}
+
+struct UsagePopover: View {
+    @ObservedObject var fetcher: UsageFetcher
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Usage")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.8))
+                Spacer()
+                Button {
+                    fetcher.fetch()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 9))
+                        .foregroundColor(.white.opacity(0.3))
+                }
+                .buttonStyle(.plain)
+            }
+
+            if let error = fetcher.error {
+                HStack(spacing: 4) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 9))
+                        .foregroundColor(.orange)
+                    Text(error)
+                        .font(.system(size: 10))
+                        .foregroundColor(.orange.opacity(0.8))
+                }
+            } else if let usage = fetcher.usage {
+                if let fiveHour = usage.five_hour {
+                    UsageBarView(label: "Session (5h)", window: fiveHour, compact: false)
+                }
+
+                if let sevenDay = usage.seven_day {
+                    UsageBarView(label: "Weekly (7d)", window: sevenDay, compact: false)
+                }
+
+                // Per-model breakdown if present and non-zero
+                if let opus = usage.seven_day_opus, opus.utilization > 0 {
+                    UsageBarView(label: "Opus", window: opus, compact: true)
+                }
+                if let sonnet = usage.seven_day_sonnet, sonnet.utilization > 0 {
+                    UsageBarView(label: "Sonnet", window: sonnet, compact: true)
+                }
+
+                // Extra usage credits
+                if let extra = usage.extra_usage, extra.is_enabled == true {
+                    Divider().background(Color.white.opacity(0.1))
+                    HStack {
+                        Text("Credits")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.white.opacity(0.6))
+                        Spacer()
+                        Text(String(format: "$%.2f / $%.0f", extra.usedDollars, extra.limitDollars))
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                }
+
+                if let lastFetched = fetcher.lastFetched {
+                    let ago = Int(Date().timeIntervalSince(lastFetched))
+                    Text(ago < 5 ? "just now" : "\(ago)s ago")
+                        .font(.system(size: 8, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.15))
+                }
+            } else {
+                HStack(spacing: 4) {
+                    ProgressView()
+                        .scaleEffect(0.5)
+                        .frame(width: 10, height: 10)
+                    Text("Loading...")
+                        .font(.system(size: 10))
+                        .foregroundColor(.white.opacity(0.3))
+                }
+            }
+        }
+        .padding(10)
+        .frame(width: 200)
+        .background(
+            VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
+        )
+        .onAppear {
+            fetcher.fetchIfStale()
+        }
+    }
+}
+
+// MARK: - Header Bar
+
 struct HeaderBar: View {
     let sessions: [SessionInfo]
     @ObservedObject var configManager: ConfigManager
+    @ObservedObject var usageFetcher: UsageFetcher
     var sessionReader: SessionReader?
+    @Binding var isExpanded: Bool
     @State private var showSettings = false
+    @State private var showUsage = false
 
     var attentionCount: Int { sessions.filter { $0.status == "attention" }.count }
     var workingCount: Int { sessions.filter { $0.status == "working" }.count }
@@ -1220,14 +1580,28 @@ struct HeaderBar: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            HStack(spacing: 4) {
-                Image(systemName: "terminal.fill")
-                    .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.6))
-                Text("Claude")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.8))
+            // Chevron + title
+            Button {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    isExpanded.toggle()
+                    UserDefaults.standard.set(isExpanded, forKey: "monitorExpanded")
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.3))
+                        .frame(width: 10)
+                    Image(systemName: "terminal.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(.white.opacity(0.6))
+                    Text("Claude")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
 
             Spacer()
 
@@ -1262,6 +1636,18 @@ struct HeaderBar: View {
                     .foregroundColor(.white.opacity(0.4))
 
                 Button {
+                    showUsage.toggle()
+                } label: {
+                    Image(systemName: "chart.bar.fill")
+                        .font(.system(size: 8))
+                        .foregroundColor(usageIconColor)
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: $showUsage, arrowEdge: .bottom) {
+                    UsagePopover(fetcher: usageFetcher)
+                }
+
+                Button {
                     showSettings.toggle()
                 } label: {
                     Image(systemName: "gearshape")
@@ -1277,6 +1663,15 @@ struct HeaderBar: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
     }
+
+    private var usageIconColor: Color {
+        guard let usage = usageFetcher.usage else { return .white.opacity(0.2) }
+        // Reflect the worst quota status
+        let maxUtil = max(usage.five_hour?.utilizationPercent ?? 0, usage.seven_day?.utilizationPercent ?? 0)
+        if maxUtil > 80 { return .red.opacity(0.7) }
+        if maxUtil > 50 { return .yellow.opacity(0.6) }
+        return .white.opacity(0.2)
+    }
 }
 
 // MARK: - Main Content View
@@ -1284,12 +1679,13 @@ struct HeaderBar: View {
 struct MonitorContentView: View {
     @ObservedObject var reader: SessionReader
     @ObservedObject var configManager: ConfigManager
-    @State private var isExpanded = true
+    @ObservedObject var usageFetcher: UsageFetcher
+    @State private var isExpanded: Bool = UserDefaults.standard.object(forKey: "monitorExpanded") as? Bool ?? true
 
     var body: some View {
         VStack(spacing: 0) {
             // Header — always visible, drag to move
-            HeaderBar(sessions: reader.sessions, configManager: configManager, sessionReader: reader)
+            HeaderBar(sessions: reader.sessions, configManager: configManager, usageFetcher: usageFetcher, sessionReader: reader, isExpanded: $isExpanded)
 
             if isExpanded && !reader.sessions.isEmpty {
                 Divider()
@@ -1489,6 +1885,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var panel: FloatingPanel!
     let reader = SessionReader()
     let configManager = ConfigManager()
+    let usageFetcher = UsageFetcher()
     var sizeObserver: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -1500,7 +1897,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         panel = FloatingPanel()
 
         let hostingView = ClickHostingView(
-            rootView: MonitorContentView(reader: reader, configManager: configManager)
+            rootView: MonitorContentView(reader: reader, configManager: configManager, usageFetcher: usageFetcher)
         )
         hostingView.frame = NSRect(origin: .zero, size: NSSize(width: 280, height: 40))
         hostingView.wantsLayer = true

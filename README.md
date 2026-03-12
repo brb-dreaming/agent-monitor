@@ -38,6 +38,16 @@ A tiny always-on-top panel you can drag anywhere on your screen. It shows every 
 
 ## Features
 
+**Usage quota tracking**
+- See your Claude Code session (5h) and weekly (7d) quota at a glance — click the bar chart icon
+- Color-coded progress bars: green (< 50%), yellow (50-80%), red (> 80%)
+- Reset countdown timers — know exactly when your quota refreshes
+- Per-model breakdown (Opus/Sonnet) when applicable
+- Extra usage credit tracking if enabled on your plan
+- The bar chart icon tints to reflect your worst quota status — subtle early warning
+- Reads your OAuth credentials from macOS Keychain automatically (one-time prompt)
+- Polls every 5 minutes with smart backoff on rate limits
+
 **Grant permissions remotely**
 - Allow or deny tool requests directly from the monitor — no terminal switching needed
 - Works even when the terminal window is hidden or on another Space
@@ -58,6 +68,7 @@ A tiny always-on-top panel you can drag anywhere on your screen. It shows every 
 - Project name, elapsed time, and last prompt preview
 - Color-coded status dots (pulsing cyan = working, orange = attention, green = done)
 - Stale sessions automatically gray out after 10 minutes
+- Collapsible panel — click the chevron to minimize to header-only mode
 
 **Stay in flow**
 - Click any row to jump to that terminal tab instantly (Terminal.app + iTerm2)
@@ -69,6 +80,7 @@ A tiny always-on-top panel you can drag anywhere on your screen. It shows every 
 - Always-on-top dark glass panel, visible on all Spaces
 - No dock icon, doesn't steal focus from your terminal
 - Drag anywhere, position persists across restarts
+- Collapse to a tiny header bar when you don't need the session list
 - Thin custom scrollbar, minimal UI footprint
 
 ## Install
@@ -197,6 +209,8 @@ The floating panel appears in the top-right corner. Drag to reposition — it re
 5. Click Allow — Claude Code proceeds without switching to the terminal
 6. Click a session row — jumps to that terminal tab
 7. Hover a row and click X — kills that Claude Code session
+8. Click the bar chart icon (📊) — see your usage quota and reset timers
+9. Click the chevron (▼) next to "Claude" — collapse/expand the session list
 
 ## Voice Setup
 
@@ -259,7 +273,7 @@ The included voice design prompt creates a warm, softly synthetic voice — like
 ## Requirements
 
 - **macOS 14+** (Sonoma or later)
-- **[Claude Code](https://docs.anthropic.com/en/docs/claude-code)** — the CLI tool from Anthropic
+- **[Claude Code](https://docs.anthropic.com/en/docs/claude-code)** — the CLI tool from Anthropic, logged in via `claude login` (OAuth — needed for usage tracking)
 - **Xcode Command Line Tools** — `xcode-select --install` (for the Swift compiler)
 - **jq** — `brew install jq` (for JSON processing in the hook script)
 - **Terminal.app or iTerm2**
@@ -297,6 +311,21 @@ Swift app detects .permission file → shows Allow/Deny/Terminal buttons
         |
         v
 User clicks Allow → app sends response through socket → Claude Code proceeds
+```
+
+**Usage tracking** reads your Claude Code OAuth credentials:
+
+```
+Swift app reads OAuth token from macOS Keychain (one-time prompt)
+        |
+        v
+Polls GET https://api.anthropic.com/api/oauth/usage every 5 minutes
+        |
+        v
+Displays session (5h) and weekly (7d) quota bars + reset countdown
+        |
+        v
+Bar chart icon tints green/yellow/red based on worst quota status
 ```
 
 Each Claude Code lifecycle event maps to a session status:
@@ -353,6 +382,10 @@ See [Troubleshooting Guide](docs/TROUBLESHOOTING.md) for detailed solutions. Qui
 | Wrong voice | Run `say -v '?'` to find the exact voice name, update `say.voice` |
 | Panel gone | `pkill -9 claude_monitor && ~/.claude/monitor/build.sh` |
 | Wrong position | `defaults delete claude_monitor monitorX && defaults delete claude_monitor monitorY` then rebuild |
+| Usage shows "No credentials" | You need to be logged in to Claude Code via OAuth (`claude login`). The app reads your token from macOS Keychain |
+| Usage shows "Auth expired" | Re-authenticate with `claude login` — the cached token has expired |
+| Usage shows "Rate limited" | Normal — the app backs off automatically (5min → 10min → 15min) and retries |
+| Keychain prompt keeps appearing | Click "Always Allow" when macOS asks to grant `claude_monitor` access to "Claude Code-credentials" |
 
 ## Uninstall
 

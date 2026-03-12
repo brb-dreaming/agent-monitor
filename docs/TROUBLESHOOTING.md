@@ -139,3 +139,71 @@ This can happen if the Python hook can't connect to the socket (monitor app not 
 ## Hook adds latency to Claude Code
 
 Each hook invocation adds ~10ms of overhead (mostly from the `ps` process tree walk for TTY detection). This is imperceptible in normal use. The TTS call runs in the background and doesn't block. The permission hook adds no latency — it blocks independently on the socket.
+
+## Usage shows "No credentials"
+
+The usage feature needs an OAuth token from Claude Code. Check:
+
+1. **Are you logged in?** Run `claude login` if you haven't authenticated, or if your session expired.
+
+2. **Where are credentials stored?** The app checks two places:
+   - `~/.claude/.credentials.json` (file-based, some installs)
+   - macOS Keychain, service `Claude Code-credentials` (most installs)
+
+3. **Verify Keychain entry exists:**
+   ```bash
+   security find-generic-password -s "Claude Code-credentials" 2>/dev/null && echo "Found" || echo "Not found"
+   ```
+
+4. **Check the token structure** — the app expects `claudeAiOauth.accessToken` inside the Keychain blob:
+   ```bash
+   security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null | python3 -c "import sys,json; d=json.loads(sys.stdin.read()); print('Has token:', 'accessToken' in d.get('claudeAiOauth', {}))"
+   ```
+
+## Usage shows "Auth expired"
+
+The OAuth token has expired. The app clears its cached token and will retry on the next poll.
+
+**Fix:** Run `claude login` to re-authenticate, then click the refresh button in the usage popover.
+
+## Usage shows "Rate limited — backing off to Xm"
+
+The Anthropic API returned HTTP 429. This is normal if you've been opening the usage popover frequently or if multiple tools are polling the same endpoint.
+
+**What happens:** The poll interval doubles automatically (5min → 10min → 15min cap). Once a successful response comes back, it resets to 5 minutes. No action needed — just wait.
+
+## Usage shows "HTTP 403" or "HTTP 500"
+
+- **403** — Your OAuth token may lack the `user:profile` scope. Re-authenticate with `claude login`.
+- **500** — Anthropic API issue. The app will retry on the next poll interval.
+
+## macOS Keychain keeps prompting for access
+
+When `claude_monitor` first reads your Claude Code credentials from the Keychain, macOS shows a permission dialog. Click **Always Allow** to grant permanent access.
+
+If you accidentally clicked "Deny":
+
+1. Open **Keychain Access.app**
+2. Search for "Claude Code-credentials"
+3. Double-click the entry → **Access Control** tab
+4. Add `claude_monitor` to the allowed applications list (or click "Allow All Applications")
+5. Save changes
+
+The app caches the token in memory after the first successful read, so the Keychain is only accessed when:
+- The app first launches
+- The cached token is about to expire (within 60 seconds of `expiresAt`)
+- A 401 response clears the cache
+
+## Panel won't collapse / expand
+
+The chevron toggle (▶/▼) next to "Claude" in the header collapses and expands the session list. If it seems stuck:
+
+1. Check if the state is persisted incorrectly:
+   ```bash
+   defaults read claude_monitor monitorExpanded
+   ```
+2. Reset it:
+   ```bash
+   defaults delete claude_monitor monitorExpanded
+   pkill claude_monitor && ~/.claude/monitor/build.sh
+   ```
