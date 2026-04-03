@@ -31,11 +31,15 @@ struct MonitorConfig: Codable {
         var on_start: Bool
         var volume: Double
     }
+    struct UsageConfig: Codable {
+        var enabled: Bool
+    }
     struct SavedVoice: Codable {
         var id: String
         var name: String
     }
     var voices: [SavedVoice]?
+    var usage: UsageConfig?
 }
 
 // MARK: - ElevenLabs Voice Info
@@ -212,10 +216,25 @@ class ConfigManager: ObservableObject {
     func toggleVoice() {
         config?.announce.enabled.toggle()
         save()
+        objectWillChange.send()
     }
 
     var voiceEnabled: Bool {
         config?.announce.enabled ?? true
+    }
+
+    func toggleUsage() {
+        if config?.usage == nil {
+            config?.usage = MonitorConfig.UsageConfig(enabled: false)
+        } else {
+            config?.usage?.enabled.toggle()
+        }
+        save()
+        objectWillChange.send()
+    }
+
+    var usageEnabled: Bool {
+        config?.usage?.enabled ?? true
     }
 
     func save() {
@@ -324,6 +343,7 @@ class UsageFetcher: ObservableObject {
     @Published var usage: UsageResponse?
     @Published var error: String?
     @Published var lastFetched: Date?
+    @Published var isEnabled: Bool = true
     private var timer: Timer?
     private var pollInterval: TimeInterval = 300 // 5 minutes
     private let maxPollInterval: TimeInterval = 900 // 15 minutes
@@ -338,9 +358,25 @@ class UsageFetcher: ObservableObject {
         return "\(home)/.claude/.credentials.json"
     }()
 
-    init() {
+    init(enabled: Bool = true) {
+        self.isEnabled = enabled
+        guard enabled else { return }
         fetch()
         schedulePoll()
+    }
+
+    func setEnabled(_ enabled: Bool) {
+        isEnabled = enabled
+        if enabled {
+            fetch()
+            schedulePoll()
+        } else {
+            timer?.invalidate()
+            timer = nil
+            usage = nil
+            error = nil
+            lastFetched = nil
+        }
     }
 
     private func schedulePoll() {
@@ -1240,6 +1276,7 @@ struct PermissionActionView: View {
 struct SettingsPopover: View {
     @ObservedObject var configManager: ConfigManager
     @ObservedObject var voiceFetcher: VoiceFetcher
+    @ObservedObject var usageFetcher: UsageFetcher
     var sessionReader: SessionReader?
     @State private var pastedVoiceId: String? = nil
     @State private var refreshed = false
@@ -1261,6 +1298,25 @@ struct SettingsPopover: View {
                     Text(refreshed ? "Refreshed" : "Refresh sessions")
                         .font(.system(size: 11))
                         .foregroundColor(refreshed ? .green.opacity(0.8) : .white.opacity(0.6))
+                    Spacer()
+                }
+            }
+            .buttonStyle(.plain)
+
+            Divider().background(Color.white.opacity(0.1))
+
+            // Usage tracking toggle
+            Button {
+                configManager.toggleUsage()
+                usageFetcher.setEnabled(configManager.usageEnabled)
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: configManager.usageEnabled ? "chart.bar.fill" : "chart.bar")
+                        .font(.system(size: 10))
+                        .foregroundColor(configManager.usageEnabled ? .cyan : .gray)
+                    Text(configManager.usageEnabled ? "Usage tracking on" : "Usage tracking off")
+                        .font(.system(size: 11))
+                        .foregroundColor(configManager.usageEnabled ? .white : .white.opacity(0.4))
                     Spacer()
                 }
             }
@@ -1477,6 +1533,7 @@ struct UsageBarView: View {
 
 struct UsagePopover: View {
     @ObservedObject var fetcher: UsageFetcher
+    @ObservedObject var configManager: ConfigManager
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -1503,6 +1560,19 @@ struct UsagePopover: View {
                     Text(error)
                         .font(.system(size: 10))
                         .foregroundColor(.orange.opacity(0.8))
+                }
+                // Offer to disable when credentials are the problem
+                if error == "No credentials" || error == "Auth expired" {
+                    Button {
+                        configManager.toggleUsage()
+                        fetcher.setEnabled(false)
+                    } label: {
+                        Text("Disable usage tracking")
+                            .font(.system(size: 9))
+                            .foregroundColor(.white.opacity(0.3))
+                            .underline()
+                    }
+                    .buttonStyle(.plain)
                 }
             } else if let usage = fetcher.usage {
                 if let fiveHour = usage.five_hour {
@@ -1635,16 +1705,18 @@ struct HeaderBar: View {
                     .font(.system(size: 10, design: .monospaced))
                     .foregroundColor(.white.opacity(0.4))
 
-                Button {
-                    showUsage.toggle()
-                } label: {
-                    Image(systemName: "chart.bar.fill")
-                        .font(.system(size: 8))
-                        .foregroundColor(usageIconColor)
-                }
-                .buttonStyle(.plain)
-                .popover(isPresented: $showUsage, arrowEdge: .bottom) {
-                    UsagePopover(fetcher: usageFetcher)
+                if configManager.usageEnabled {
+                    Button {
+                        showUsage.toggle()
+                    } label: {
+                        Image(systemName: "chart.bar.fill")
+                            .font(.system(size: 8))
+                            .foregroundColor(usageIconColor)
+                    }
+                    .buttonStyle(.plain)
+                    .popover(isPresented: $showUsage, arrowEdge: .bottom) {
+                        UsagePopover(fetcher: usageFetcher, configManager: configManager)
+                    }
                 }
 
                 Button {
@@ -1656,7 +1728,7 @@ struct HeaderBar: View {
                 }
                 .buttonStyle(.plain)
                 .popover(isPresented: $showSettings, arrowEdge: .bottom) {
-                    SettingsPopover(configManager: configManager, voiceFetcher: configManager.voiceFetcher, sessionReader: sessionReader)
+                    SettingsPopover(configManager: configManager, voiceFetcher: configManager.voiceFetcher, usageFetcher: usageFetcher, sessionReader: sessionReader)
                 }
             }
         }
@@ -1885,11 +1957,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var panel: FloatingPanel!
     let reader = SessionReader()
     let configManager = ConfigManager()
-    let usageFetcher = UsageFetcher()
+    var usageFetcher: UsageFetcher!
     var sizeObserver: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+
+        usageFetcher = UsageFetcher(enabled: configManager.usageEnabled)
 
         // Start the Unix socket server for permission responses
         PermissionSocketServer.shared.start()
@@ -1931,6 +2005,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             queue: .main
         ) { [weak self] _ in
             self?.panel.savePosition()
+        }
+
+        // Re-show panel after screen wake, space change, or display reconfiguration
+        let workspace = NSWorkspace.shared.notificationCenter
+        workspace.addObserver(forName: NSWorkspace.screensDidWakeNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.panel.orderFrontRegardless()
+        }
+        workspace.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.panel.orderFrontRegardless()
+        }
+        NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
+            guard let self = self, let panel = self.panel else { return }
+            // Ensure panel is still on a visible screen
+            if let screen = NSScreen.main {
+                let screenFrame = screen.visibleFrame
+                let panelOrigin = panel.frame.origin
+                if !screenFrame.contains(panelOrigin) {
+                    panel.restorePosition()
+                }
+            }
+            panel.orderFrontRegardless()
         }
     }
 }

@@ -56,7 +56,7 @@ The settings popover fetches voices from ElevenLabs on app launch. It only shows
 If the list is empty:
 - Verify your `.env` file path and API key
 - Make sure you have at least one voice in your ElevenLabs voice library
-- The built-in "human robot" voice should always appear (it's in config.json, not fetched)
+- Any voices you've saved (via Generate, Paste, or library selection) appear in the `voices` array in config.json — they show up even without an API connection
 
 ## Panel doesn't appear after build
 

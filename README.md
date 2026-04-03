@@ -46,6 +46,7 @@ A tiny always-on-top panel you can drag anywhere on your screen. It shows every 
 - Extra usage credit tracking if enabled on your plan
 - The bar chart icon tints to reflect your worst quota status — subtle early warning
 - Reads your OAuth credentials from macOS Keychain automatically (one-time prompt)
+- Disable usage tracking entirely from settings if you don't want credential access
 - Polls every 5 minutes with smart backoff on rate limits
 
 **Grant permissions remotely**
@@ -58,8 +59,9 @@ A tiny always-on-top panel you can drag anywhere on your screen. It shows every 
 **Voice announcements**
 - Speaks when sessions finish or need permission — no more tab-switching to check
 - Works immediately with macOS built-in voices (zero setup)
-- Optional [ElevenLabs](https://elevenlabs.io) support for premium AI voices
+- Optional [ElevenLabs](https://elevenlabs.io) AI voices with **smart caching** — each phrase is generated once, saved as MP3, and replayed instantly (~10ms) on every future announcement
 - One-click voice generation — designs a custom AI voice from an included prompt and saves it to your account
+- Phrase tuning — customize punctuation, stability, and style per phrase via `phrases.json`
 - Built-in voice picker — browse your ElevenLabs library or paste any voice ID
 - Per-event toggles and volume in `config.json`
 
@@ -122,7 +124,10 @@ Download the files from this repo and place them:
 |------|-----------|
 | `claude_monitor.swift` | `~/.claude/monitor/claude_monitor.swift` |
 | `build.sh` | `~/.claude/monitor/build.sh` |
-| `config.json` | `~/.claude/monitor/config.json` |
+| `config.default.json` | `~/.claude/monitor/config.default.json` |
+| `voice-cache.sh` | `~/.claude/monitor/voice-cache.sh` (auto-copied to hooks/ on build) |
+| `phrases.json` | `~/.claude/monitor/phrases.json` (auto-copied to voice-cache/ on build) |
+| `.env.example` | `~/.claude/monitor/.env.example` |
 | `monitor.sh` | `~/.claude/hooks/monitor.sh` |
 | `monitor_permission.py` | `~/.claude/hooks/monitor_permission.py` |
 
@@ -214,17 +219,25 @@ The floating panel appears in the top-right corner. Drag to reposition — it re
 
 ## Voice Setup
 
-Claude Monitor speaks out loud when sessions finish or need attention. It works out of the box with your Mac's built-in voices — no account or API key needed.
+Claude Monitor speaks out loud when sessions finish or need attention. There are three TTS providers, from simplest to highest quality:
 
-### macOS voices (default, zero setup)
+| Provider | Quality | Setup | How it works |
+|----------|---------|-------|--------------|
+| `say` | Good | None | macOS built-in speech — works immediately |
+| `cache` | Best | ElevenLabs API key | Pre-generates audio once per phrase, caches as MP3, instant replay |
+| `elevenlabs` | Best | ElevenLabs API key | Real-time API call per announcement (no caching) |
 
-Ships with the **Zoe (Premium)** voice at 50% volume. If you don't have Zoe installed, your Mac will use its default voice automatically.
+The default is **`say`** — zero setup, works out of the box. If you want AI-quality voice, the **`cache`** provider is recommended: it generates each announcement phrase once via ElevenLabs, saves the MP3 locally, and replays it instantly (~10ms) on every future announcement. You only pay for each unique phrase once.
 
-**To install premium voices** (they sound much better):
+### macOS voices (default — zero setup)
+
+Voice announcements work out of the box using your Mac's built-in speech synthesizer. The default voice is **Zoe (Premium)** at 50% volume. If Zoe isn't installed, macOS falls back to its system default automatically.
+
+**Installing better voices** (recommended — they sound much better than the defaults):
 
 1. Open **System Settings** → **Accessibility** → **Spoken Content** → **System Voice** → **Manage Voices**
-2. Browse and download any voice you like (Zoe, Ava, Tom, etc. — look for "Premium" or "Enhanced" variants)
-3. Update `config.json` with the voice name:
+2. Browse and download voices you like (Zoe, Ava, Tom, etc. — look for "Premium" or "Enhanced" variants)
+3. Update your `config.json` with the exact voice name:
 
 ```json
 {
@@ -235,32 +248,90 @@ Ships with the **Zoe (Premium)** voice at 50% volume. If you don't have Zoe inst
 
 Run `say -v '?'` in Terminal to list all installed voices and their exact names.
 
-### ElevenLabs (AI voices)
+### Voice cache — AI voices with instant playback (recommended)
 
-For the highest quality, you can use [ElevenLabs](https://elevenlabs.io) AI voices instead:
+The `cache` provider gives you ElevenLabs AI voice quality with near-zero latency. Here's how it works:
 
-1. Get an API key at [elevenlabs.io](https://elevenlabs.io)
-2. Copy the included example and add your key:
+1. When the monitor needs to announce a phrase (e.g., "my-project done"), it checks `~/.claude/voice-cache/` for a cached MP3
+2. **Cache hit** — plays the MP3 instantly (~10ms). No API call, no network, no delay
+3. **Cache miss** — calls ElevenLabs to generate the audio, saves the MP3 to the cache, and plays it. All future announcements of that phrase are instant
+
+Since announcements follow predictable patterns (`"project-name done"`, `"project-name needs attention"`), most phrases are generated once during your first session with a project and cached forever after.
+
+#### Setup
+
+1. **Get an ElevenLabs API key** — sign up at [elevenlabs.io](https://elevenlabs.io) (free tier works — you only generate each phrase once)
+
+2. **Save your key** — copy the included example and add your key:
    ```bash
    cp .env.example ~/.env
-   # edit ~/.env and paste your API key
+   # edit ~/.env and paste your ELEVENLABS_API_KEY
    ```
-3. Update `config.json`:
+
+3. **Generate a voice** — open the settings popover (gear icon) and click **Generate voice**. This designs a custom AI voice from the included prompt, saves it to your ElevenLabs account, and sets the `voice_id` in your config. One click, done.
+
+4. **Switch to cache mode** — update your `config.json`:
    ```json
    {
-     "tts_provider": "elevenlabs",
+     "tts_provider": "cache",
      "elevenlabs": {
        "env_file": "~/.env"
      }
    }
    ```
-4. Open the settings popover (gear icon) and click **Generate voice** — this designs a custom AI voice from the included prompt and saves it to your ElevenLabs account. One click, done.
 
-You can also browse your existing ElevenLabs voice library from the voice picker, or paste any voice ID from your clipboard — the app resolves the name automatically and saves it to your list.
+5. **Done.** The first time each phrase is announced, you'll hear a brief delay while the MP3 is generated. Every time after that, it's instant.
 
-The included voice design prompt creates a warm, softly synthetic voice — like a machine that genuinely cares. You can customize it in `config.json` under `elevenlabs.voice_design_prompt`.
+#### Phrase tuning
 
-### Volume and toggles
+You can customize how specific phrases sound by editing `~/.claude/voice-cache/phrases.json`. Each phrase can override the text sent to ElevenLabs and tune voice settings independently:
+
+```json
+{
+  "claude replied": {
+    "text": "Claude replied.",
+    "stability": 0.55,
+    "similarity_boost": 0.75,
+    "style": 0.15,
+    "speed": 1.0
+  }
+}
+```
+
+This lets you control punctuation (periods for calm, exclamation marks for urgency), stability (lower = more expressive), and style. After editing, delete the corresponding MP3 from `~/.claude/voice-cache/` to regenerate it with the new settings.
+
+The cache key is the phrase lowercased with spaces replaced by dashes: `"my project done"` → `my-project-done.mp3`.
+
+#### Managing the cache
+
+```bash
+# See all cached phrases
+ls ~/.claude/voice-cache/*.mp3
+
+# Regenerate a specific phrase (delete + next announcement re-generates)
+rm ~/.claude/voice-cache/my-project-done.mp3
+
+# Clear entire cache (all phrases regenerate on next use)
+rm ~/.claude/voice-cache/*.mp3
+```
+
+#### Other ways to pick a voice
+
+- **Browse your library** — the voice picker in settings shows all voices from your ElevenLabs account
+- **Paste a voice ID** — copy any voice ID to your clipboard, click "Paste voice ID" in settings — the app resolves the name and saves it
+- **Customize the design prompt** — edit `elevenlabs.voice_design_prompt` in `config.json` before generating. The included prompt creates a warm, softly synthetic voice — like a machine that genuinely cares
+
+### ElevenLabs real-time (no caching)
+
+If you prefer fresh API calls for every announcement (e.g., you're experimenting with voice settings), set `tts_provider` to `"elevenlabs"` instead of `"cache"`. Same setup as above, but audio is generated on each announcement and not saved. Falls back to macOS `say` on API failure.
+
+### Fallback behavior
+
+Both `cache` and `elevenlabs` providers automatically fall back to macOS `say` if the ElevenLabs API is unavailable (no API key, network error, rate limit). You never miss an announcement.
+
+### Volume and event toggles
+
+All toggleable from the settings popover or directly in `config.json`:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
@@ -295,7 +366,7 @@ Floating panel updates: status dot, project name, prompt preview, elapsed time
         |
         v
 Click row → AppleScript activates the right Terminal/iTerm2 tab
-TTS → announces "project done" or "project needs attention"
+TTS → announces via cached MP3 (instant) or macOS say (default)
 ```
 
 **Permission granting** uses a separate path:
@@ -343,6 +414,8 @@ See [Architecture](docs/ARCHITECTURE.md) for the full technical deep-dive.
 
 ## Configuration
 
+Configuration lives in `~/.claude/monitor/config.json`. On first build, this is copied from `config.default.json` — the tracked template with safe defaults. Your `config.json` is gitignored so your personal settings (voice IDs, API paths, saved voices) are never committed.
+
 Full config reference: [docs/CONFIGURATION.md](docs/CONFIGURATION.md)
 
 ```json
@@ -364,9 +437,12 @@ Full config reference: [docs/CONFIGURATION.md](docs/CONFIGURATION.md)
     "on_start": false,
     "volume": 0.5
   },
+  "usage": { "enabled": true },
   "voices": []
 }
 ```
+
+When you change settings through the UI (toggle voice, select a voice, disable usage tracking), changes are written to `config.json` immediately. To reset to defaults, delete `config.json` and rebuild — a fresh copy is created from the template.
 
 ## Troubleshooting
 
@@ -382,7 +458,7 @@ See [Troubleshooting Guide](docs/TROUBLESHOOTING.md) for detailed solutions. Qui
 | Wrong voice | Run `say -v '?'` to find the exact voice name, update `say.voice` |
 | Panel gone | `pkill -9 claude_monitor && ~/.claude/monitor/build.sh` |
 | Wrong position | `defaults delete claude_monitor monitorX && defaults delete claude_monitor monitorY` then rebuild |
-| Usage shows "No credentials" | You need to be logged in to Claude Code via OAuth (`claude login`). The app reads your token from macOS Keychain |
+| Usage shows "No credentials" | You need to be logged in to Claude Code via OAuth (`claude login`). Or disable usage tracking in settings if you don't want credential access |
 | Usage shows "Auth expired" | Re-authenticate with `claude login` — the cached token has expired |
 | Usage shows "Rate limited" | Normal — the app backs off automatically (5min → 10min → 15min) and retries |
 | Keychain prompt keeps appearing | Click "Always Allow" when macOS asks to grant `claude_monitor` access to "Claude Code-credentials" |
@@ -403,14 +479,21 @@ Then remove the 6 hook entries (`SessionStart`, `UserPromptSubmit`, `Stop`, `Not
 ```
 ~/.claude/
 ├── monitor/
-│   ├── claude_monitor.swift    # SwiftUI floating panel
-│   ├── claude_monitor          # Compiled binary (after build)
+│   ├── claude_monitor.swift    # SwiftUI floating panel (single-file app)
+│   ├── claude_monitor          # Compiled binary (after build, gitignored)
 │   ├── build.sh               # Compile + launch script
-│   ├── config.json            # TTS + announcement config
-│   └── sessions/              # Session + permission files (auto-managed)
+│   ├── config.default.json    # Default config template (tracked in git)
+│   ├── config.json            # Your live config (gitignored, created from template on first build)
+│   ├── voice-cache.sh         # Voice cache script (copied to hooks/ on first build)
+│   ├── phrases.json           # Default phrase tuning template (copied to voice-cache/ on first build)
+│   ├── .env.example           # ElevenLabs API key template
+│   └── sessions/              # Session + permission files (auto-managed, gitignored)
 ├── hooks/
 │   ├── monitor.sh             # Hook script — lifecycle events + TTS
-│   └── monitor_permission.py  # Permission hook — Unix socket IPC
+│   ├── monitor_permission.py  # Permission hook — Unix socket IPC
+│   └── voice-cache.sh         # Voice cache — generate once, replay instantly (installed by build.sh)
+├── voice-cache/               # Cached MP3 announcements (auto-generated, not tracked)
+│   └── phrases.json           # Per-phrase voice settings (stability, style, text overrides)
 └── settings.json              # Claude Code settings (hooks go here)
 ```
 

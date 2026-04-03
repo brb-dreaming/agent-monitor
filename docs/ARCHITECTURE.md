@@ -71,12 +71,32 @@ jq '...' > "${file}.tmp" && mv "${file}.tmp" "$file"
 
 ### TTS Integration
 
-Two providers, same interface:
+Three providers, same interface. The provider is selected by `tts_provider` in `config.json`:
 
-- **macOS `say`** — uses `osascript` for volume control: `say "text" using "voice" speaking rate N volume V`
-- **ElevenLabs** — `curl` POST to `/v1/text-to-speech/{voice_id}`, plays response with `afplay -v`
+**macOS `say` (default)**
+- Uses `osascript` for volume control: `say "text" using "voice" speaking rate N volume V`
+- Zero setup — works with any installed macOS voice
+- Premium voices (Zoe, Ava, etc.) can be downloaded in System Settings → Accessibility → Spoken Content
 
-Both run in the background (`&` + `disown`) to avoid blocking the hook.
+**Voice cache (recommended for AI voices)**
+- Implemented in `voice-cache.sh`, called by `monitor.sh` when `tts_provider` is `"cache"`
+- On cache hit: plays `~/.claude/voice-cache/{phrase-key}.mp3` instantly (~10ms via `afplay`)
+- On cache miss: calls ElevenLabs API, saves the MP3 to the cache directory, then plays it
+- Cache key: phrase lowercased → spaces to dashes → strip non-alphanumeric (e.g., `"my project done"` → `my-project-done.mp3`)
+- Reads per-phrase overrides from `~/.claude/voice-cache/phrases.json` (text, stability, style, speed)
+- Falls back to macOS `say` if no ElevenLabs credentials
+
+**ElevenLabs real-time (no caching)**
+- `curl` POST to `/v1/text-to-speech/{voice_id}`, saves to temp MP3, plays with `afplay -v`
+- Temp file is deleted after 30 seconds
+- Falls back to macOS `say` on API failure
+
+**Voice generation flow** (one-time, via the SwiftUI settings popover):
+1. POST to `/v1/text-to-voice/design` with the voice design prompt → returns a `generated_voice_id`
+2. POST to `/v1/text-to-voice` with the generated ID → saves permanently to your ElevenLabs account, returns a `voice_id`
+3. The `voice_id` is stored in `config.json` and used by both `cache` and `elevenlabs` providers
+
+All providers run in the background (`&` + `disown`) to avoid blocking the hook.
 
 ## Permission Hook (`monitor_permission.py`)
 

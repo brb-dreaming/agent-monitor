@@ -7,8 +7,6 @@ sessions/
 # macOS
 .DS_Store
 
-# Personal config backup
-config.json.personal
-
-# User-specific config note:
-# config.json is committed as a template with safe defaults
+# Live config (personal settings, voice IDs, etc.)
+# config.default.json is the tracked template — copied to config.json on first build
+config.json

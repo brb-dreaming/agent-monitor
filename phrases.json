@@ -1,0 +1,9 @@
+{
+  "claude replied": {
+    "text": "Claude replied.",
+    "stability": 0.55,
+    "similarity_boost": 0.75,
+    "style": 0.15,
+    "speed": 1.0
+  }
+}

@@ -1,8 +1,7 @@
 #!/bin/bash
 # ~/.claude/hooks/monitor.sh
 # Claude Code lifecycle hook — writes session JSON + triggers TTS
-# Called by 5 hook events: SessionStart, UserPromptSubmit, Stop, Notification, SessionEnd
-# (PermissionRequest is handled separately by monitor_permission.py)
+# Called by all 5 hook events: SessionStart, UserPromptSubmit, Stop, Notification, SessionEnd
 #
 # Usage: monitor.sh <event>
 # Receives hook JSON on stdin
@@ -74,7 +73,10 @@ announce() {
     local volume
     volume=$(jq -r '.announce.volume // 0.5' "$CONFIG_FILE")
 
-    if [ "$provider" = "elevenlabs" ]; then
+    if [ "$provider" = "cache" ]; then
+        "$HOME/.claude/hooks/voice-cache.sh" "$msg" "$volume" &
+        disown 2>/dev/null
+    elif [ "$provider" = "elevenlabs" ]; then
         local env_file model stability similarity
         env_file=$(jq -r '.elevenlabs.env_file // empty' "$CONFIG_FILE")
         env_file="${env_file/#\~/$HOME}"
@@ -220,8 +222,22 @@ case "$EVENT" in
         else
             create_session "done"
         fi
-        if should_announce done; then
-            announce "$PROJECT_NAME done" &
+        # In convo mode, say "Claude replied" instead of project name
+        if [ -f /tmp/claude-convo-active.json ]; then
+            CONVO_SID=$(python3 -c "import json; print(json.load(open('/tmp/claude-convo-active.json')).get('session_id',''))" 2>/dev/null)
+            if [ "$CONVO_SID" = "$SESSION_ID" ]; then
+                if should_announce done; then
+                    announce "Claude replied" &
+                fi
+            else
+                if should_announce done; then
+                    announce "$PROJECT_NAME done" &
+                fi
+            fi
+        else
+            if should_announce done; then
+                announce "$PROJECT_NAME done" &
+            fi
         fi
         ;;
 
