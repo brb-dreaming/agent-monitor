@@ -118,23 +118,31 @@ mkdir -p ~/.claude/hooks
 
 #### 3. Copy files
 
-Download the files from this repo and place them:
-
-| File | Install to |
-|------|-----------|
-| `claude_monitor.swift` | `~/.claude/monitor/claude_monitor.swift` |
-| `build.sh` | `~/.claude/monitor/build.sh` |
-| `config.default.json` | `~/.claude/monitor/config.default.json` |
-| `voice-cache.sh` | `~/.claude/monitor/voice-cache.sh` (auto-copied to hooks/ on build) |
-| `phrases.json` | `~/.claude/monitor/phrases.json` (auto-copied to voice-cache/ on build) |
-| `.env.example` | `~/.claude/monitor/.env.example` |
-| `monitor.sh` | `~/.claude/hooks/monitor.sh` |
-| `monitor_permission.py` | `~/.claude/hooks/monitor_permission.py` |
-
-Make the scripts executable:
+Clone or download this repo into `~/.claude/monitor/`:
 
 ```bash
-chmod +x ~/.claude/monitor/build.sh ~/.claude/hooks/monitor.sh
+git clone https://github.com/brb-dreaming/claude-monitor.git ~/.claude/monitor
+```
+
+Or download and place these files manually — everything goes in `~/.claude/monitor/`:
+
+| File | Description |
+|------|-------------|
+| `claude_monitor.swift` | SwiftUI floating panel (single-file app) |
+| `build.sh` | Compile + launch script |
+| `config.default.json` | Default config template |
+| `monitor.sh` | Hook script — lifecycle events + TTS |
+| `monitor_permission.py` | Permission hook — Unix socket IPC |
+| `voice-cache.sh` | Voice cache — generate once, replay instantly |
+| `phrases.json` | Default phrase tuning template |
+| `.env.example` | ElevenLabs API key template |
+
+`build.sh` automatically syncs `monitor.sh`, `monitor_permission.py`, and `voice-cache.sh` to `~/.claude/hooks/` on every build, creates `config.json` from the template, and initializes the voice cache directory.
+
+Make the build script executable:
+
+```bash
+chmod +x ~/.claude/monitor/build.sh
 ```
 
 #### 4. Configure hooks
@@ -372,16 +380,19 @@ TTS → announces via cached MP3 (instant) or macOS say (default)
 **Permission granting** uses a separate path:
 
 ```
-Claude Code needs permission
+Swift app starts Unix socket server at /tmp/claude-monitor.sock
         |
         v
-monitor_permission.py connects to Unix socket, writes .permission file
+Claude Code needs permission → fires PermissionRequest hook
+        |
+        v
+monitor_permission.py connects to the socket, writes .permission file, blocks
         |
         v
 Swift app detects .permission file → shows Allow/Deny/Terminal buttons
         |
         v
-User clicks Allow → app sends response through socket → Claude Code proceeds
+User clicks Allow → app sends response through socket → hook unblocks → Claude Code proceeds
 ```
 
 **Usage tracking** reads your Claude Code OAuth credentials:
@@ -468,7 +479,8 @@ See [Troubleshooting Guide](docs/TROUBLESHOOTING.md) for detailed solutions. Qui
 ```bash
 pkill claude_monitor
 rm -rf ~/.claude/monitor
-rm ~/.claude/hooks/monitor.sh ~/.claude/hooks/monitor_permission.py
+rm -f ~/.claude/hooks/monitor.sh ~/.claude/hooks/monitor_permission.py ~/.claude/hooks/voice-cache.sh
+rm -rf ~/.claude/voice-cache
 rm -f /tmp/claude-monitor.sock
 ```
 
