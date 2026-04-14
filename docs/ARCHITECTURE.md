@@ -18,8 +18,9 @@ Claude Monitor has three components: a **bash hook script** for session lifecycl
                                              │                    │
 ┌──────────────────────────┐  Unix socket    │  - Permission      │
 │  monitor_permission.py   │ ────────────────│    buttons         │
-│                          │ /tmp/claude-    │                    │
-│  - PermissionRequest hook│  monitor.sock   │  - Usage quota     │
+│                          │ ~/.claude/      │                    │
+│  - PermissionRequest hook│  monitor/       │  - Usage quota     │
+│                          │  monitor.sock   │                    │
 │  - Blocks until response │                 │    tracking        │
 └──────────────────────────┘                 └────────┬───────────┘
                                                       │
@@ -59,7 +60,7 @@ Hook process (stdin = pipe, no tty)
             └── shell on TTY ← found: /dev/ttys018
 ```
 
-For iTerm2, the `ITERM_SESSION_ID` environment variable is used directly (set by iTerm2 on session creation).
+For iTerm2, the `ITERM_SESSION_ID` environment variable is used directly (set by iTerm2 on session creation). For WezTerm, `WEZTERM_PANE` provides the pane ID.
 
 ### Atomic Writes
 
@@ -74,7 +75,7 @@ jq '...' > "${file}.tmp" && mv "${file}.tmp" "$file"
 Three providers, same interface. The provider is selected by `tts_provider` in `config.json`:
 
 **macOS `say` (default)**
-- Uses `osascript` for volume control: `say "text" using "voice" speaking rate N volume V`
+- Uses `say -v "voice" -r rate "text"`. Note: the `announce.volume` setting only applies to the `cache` and `elevenlabs` providers (via `afplay -v`)
 - Zero setup — works with any installed macOS voice
 - Premium voices (Zoe, Ava, etc.) can be downloaded in System Settings → Accessibility → Spoken Content
 
@@ -112,7 +113,7 @@ Claude Code's `PermissionRequest` hook has a race condition: if the hook takes m
 1. Claude Code fires PermissionRequest hook
 2. monitor_permission.py starts:
    a. Writes {session_id}.permission file (tool name, command, etc.)
-   b. Connects to /tmp/claude-monitor.sock
+   b. Connects to ~/.claude/monitor/monitor.sock
    c. Sends permission details as JSON
    d. Blocks on sock.recv() — waiting for user decision
 3. Swift app detects .permission file → shows Allow/Deny/Terminal buttons
@@ -173,14 +174,15 @@ Bottom edge (moves down) ────────
 
 **Liveness check**: Every 5 seconds, the app checks if each session's TTY still has processes running. If the terminal tab was closed (no processes on TTY), the session file is removed automatically.
 
-**Discovery**: The refresh button in settings scans for running `claude` processes, finds their TTYs and working directories, and creates session files for any that aren't tracked.
+**Discovery**: On startup and when the refresh button is clicked, the app discovers running Claude Code sessions that hooks missed. It cross-references `ps` (for claude processes with TTYs), `wezterm cli list` (for pane→TTY mapping), and iTerm2 AppleScript (for session IDs). It resolves each process's working directory via `lsof`, skips `cwd=/` (a launcher artifact), detects the correct terminal type, and creates session files for any that aren't already tracked.
 
 ### Terminal Tab Switching
 
-Two strategies based on terminal type:
+Three strategies based on terminal type:
 
 - **Terminal.app** — AppleScript iterates all windows/tabs, matches `tty of t` against the stored TTY path
 - **iTerm2** — AppleScript matches `unique id of s` against the stored `ITERM_SESSION_ID`
+- **WezTerm** — `wezterm cli activate-pane --pane-id` focuses the pane directly
 
 ### Session Kill
 
@@ -188,7 +190,8 @@ When killing a session:
 
 1. For Terminal.app: `pkill -TERM -t <tty> -f claude` sends SIGTERM to claude processes on that TTY
 2. For iTerm2: AppleScript gets the TTY from the iTerm2 session, then uses the same `pkill` approach
-3. Session file is cleaned up after 3 seconds
+3. For WezTerm: `wezterm cli list` resolves pane ID → TTY, then uses the same `pkill` approach
+4. Session file is cleaned up after 3 seconds
 
 ## Session JSON Schema
 
@@ -198,8 +201,8 @@ When killing a session:
   "status": "starting | working | done | attention",
   "project": "directory-name",
   "cwd": "/absolute/path",
-  "terminal": "terminal | iterm2",
-  "terminal_session_id": "/dev/ttys018 | w0t0p0:GUID",
+  "terminal": "terminal | iterm2 | wezterm",
+  "terminal_session_id": "/dev/ttys018 | w0t0p0:GUID | 42",
   "started_at": "ISO8601",
   "updated_at": "ISO8601",
   "last_prompt": "first 200 chars of last user prompt"

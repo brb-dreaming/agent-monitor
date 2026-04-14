@@ -24,6 +24,23 @@ PHRASES_FILE="$CACHE_DIR/phrases.json"
 
 mkdir -p "$CACHE_DIR"
 
+play_say_with_volume() {
+    local msg="$1"
+    local voice="$2"
+    local rate="$3"
+    local volume="$4"
+
+    (
+        local temp_audio
+        temp_audio=$(mktemp -t claude_monitor_voice_cache_say) || exit 1
+        if say -v "$voice" -r "$rate" -o "$temp_audio" -- "$msg"; then
+            afplay -v "$volume" "$temp_audio"
+        fi
+        rm -f "$temp_audio"
+    ) &
+    disown 2>/dev/null
+}
+
 # Generate cache key: lowercase, spaces to dashes, strip non-alnum
 PHRASE_LOWER=$(echo "$PHRASE" | tr '[:upper:]' '[:lower:]')
 CACHE_KEY=$(echo "$PHRASE_LOWER" | tr ' ' '-' | tr -cd 'a-z0-9-')
@@ -53,11 +70,12 @@ MODEL=$(jq -r '.elevenlabs.model // "eleven_multilingual_v2"' "$CONFIG_FILE" 2>/
 # Default voice settings from config
 DEF_STABILITY=$(jq -r '.elevenlabs.stability // 0.5' "$CONFIG_FILE" 2>/dev/null)
 DEF_SIMILARITY=$(jq -r '.elevenlabs.similarity_boost // 0.75' "$CONFIG_FILE" 2>/dev/null)
+SAY_VOICE=$(jq -r '.say.voice // "Samantha"' "$CONFIG_FILE" 2>/dev/null)
+SAY_RATE=$(jq -r '.say.rate // 200' "$CONFIG_FILE" 2>/dev/null)
 
 if [ -z "${ELEVENLABS_API_KEY:-}" ] || [ -z "$VOICE_ID" ]; then
     echo "No ElevenLabs credentials. Cannot generate." >&2
-    say -v "Zoe (Premium)" -r 200 "$PHRASE" &
-    disown 2>/dev/null
+    play_say_with_volume "$PHRASE" "$SAY_VOICE" "$SAY_RATE" "$VOLUME"
     exit 0
 fi
 
@@ -119,6 +137,5 @@ if [ "$HTTP_CODE" = "200" ] && [ -s "$CACHE_FILE" ]; then
     disown 2>/dev/null
 else
     rm -f "$CACHE_FILE"
-    say -v "Zoe (Premium)" -r 200 "$PHRASE" &
-    disown 2>/dev/null
+    play_say_with_volume "$PHRASE" "$SAY_VOICE" "$SAY_RATE" "$VOLUME"
 fi

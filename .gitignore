@@ -3,6 +3,12 @@ claude_monitor
 
 # Runtime session data
 sessions/
+monitor.sock
+layer_debug.txt
+codex_notify_chain.json
+
+# Internal reviews
+reviews/
 
 # macOS
 .DS_Store
@@ -10,3 +16,4 @@ sessions/
 # Live config (personal settings, voice IDs, etc.)
 # config.default.json is the tracked template — copied to config.json on first build
 config.json
+config.json.personal

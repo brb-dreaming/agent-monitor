@@ -22,5 +22,14 @@
   "usage": {
     "enabled": true
   },
+  "skin": "glass",
+  "glass": {
+    "blur": 1.0,
+    "opacity": 0.5,
+    "tintR": 0.5,
+    "tintG": 0.5,
+    "tintB": 0.5,
+    "tintStrength": 0.0
+  },
   "voices": []
 }

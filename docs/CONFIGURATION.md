@@ -33,11 +33,22 @@ Changes are picked up by the hook script on the next event and by the SwiftUI ap
   "usage": {
     "enabled": true
   },
+  "skin": "glass",
   "voices": []
 }
 ```
 
 ## Fields
+
+### `skin`
+
+Visual theme for the floating panel. Changeable from the settings popover or directly in `config.json`.
+
+| Value | Description |
+|-------|-------------|
+| `"glass"` | Pure frosted glass with background blur (default) |
+| `"obsidian"` | Dark neumorphic, carved-from-shadow depth |
+| `"terminal"` | Retro phosphor green CRT, monospaced |
 
 ### `tts_provider`
 
@@ -51,7 +62,7 @@ Which TTS engine to use for voice announcements.
 
 ### `elevenlabs`
 
-ElevenLabs configuration. Only used when `tts_provider` is `"elevenlabs"`.
+ElevenLabs configuration. Used when `tts_provider` is `"cache"` or `"elevenlabs"`.
 
 The ElevenLabs integration has two phases:
 
@@ -179,7 +190,7 @@ If you see "No credentials", make sure you're logged in to Claude Code via OAuth
 
 Click the gear icon in the panel header to access settings at runtime:
 
-- **Refresh sessions** — scans for running Claude processes and creates session files for any that aren't tracked
+- **Refresh sessions** — discovers running Claude Code sessions that hooks missed (e.g., started before hooks were configured) and re-reads the sessions directory
 - **Usage tracking on/off** — toggles `usage.enabled`. When off, hides the bar chart icon and stops all credential access and API polling
 - **Voice on/off** — toggles `announce.enabled`
 - **Voice picker** — select from saved + library voices
