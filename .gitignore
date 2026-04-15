@@ -4,6 +4,7 @@ claude_monitor
 # Runtime session data
 sessions/
 monitor.sock
+claude_monitor.lock
 layer_debug.txt
 codex_notify_chain.json
 
