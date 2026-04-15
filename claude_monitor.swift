@@ -96,34 +96,69 @@ struct MonitorSkin: Identifiable, Equatable {
         id: "terminal",
         name: "Terminal",
         colors: SkinColors(
-            working: Color(red: 0.2, green: 1.0, blue: 0.3),
-            attention: Color(red: 1.0, green: 0.85, blue: 0.1),
-            done: Color(red: 0.15, green: 0.75, blue: 0.25),
-            starting: Color(red: 0.1, green: 0.4, blue: 0.12),
-            headerText: Color(red: 0.15, green: 0.8, blue: 0.2),
-            headerIcon: Color(red: 0.1, green: 0.55, blue: 0.15),
-            sessionTitle: Color(red: 0.2, green: 0.95, blue: 0.3),
-            sessionTitleStale: Color(red: 0.08, green: 0.3, blue: 0.1),
-            sessionSubtext: Color(red: 0.1, green: 0.45, blue: 0.12),
-            timestamp: Color(red: 0.08, green: 0.35, blue: 0.1),
-            divider: Color(red: 0.05, green: 0.2, blue: 0.05),
-            border: Color(red: 0.08, green: 0.3, blue: 0.08),
-            shadow: .black.opacity(0.6),
-            panelBackground: Color(red: 0.01, green: 0.04, blue: 0.01),
-            permissionBackground: Color(red: 0.15, green: 0.2, blue: 0.0).opacity(0.2),
-            buttonTextColor: Color(red: 0.12, green: 0.6, blue: 0.15),
-            settingsAccent: Color(red: 0.2, green: 0.95, blue: 0.3),
-            accent: Color(red: 0.2, green: 0.95, blue: 0.3),
-            chevron: Color(red: 0.08, green: 0.35, blue: 0.1),
-            killButton: Color(red: 0.12, green: 0.5, blue: 0.15),
-            statusBadgeText: Color(red: 0.15, green: 0.7, blue: 0.2)
+            working: Color(red: 0.659, green: 0.941, blue: 0.690),
+            attention: Color(red: 1.000, green: 0.667, blue: 0.239),
+            done: Color(red: 0.490, green: 0.784, blue: 0.541),
+            starting: Color(red: 0.055, green: 0.157, blue: 0.094),
+            headerText: Color(red: 0.490, green: 0.784, blue: 0.541),
+            headerIcon: Color(red: 0.176, green: 0.416, blue: 0.271),
+            sessionTitle: Color(red: 0.490, green: 0.784, blue: 0.541),
+            sessionTitleStale: Color(red: 0.102, green: 0.251, blue: 0.157),
+            sessionSubtext: Color(red: 0.176, green: 0.416, blue: 0.271),
+            timestamp: Color(red: 0.176, green: 0.416, blue: 0.271),
+            divider: Color(red: 0.055, green: 0.157, blue: 0.094),
+            border: Color(red: 0.290, green: 0.600, blue: 0.408).opacity(0.6),
+            shadow: .black.opacity(0.45),
+            panelBackground: Color(red: 0.024, green: 0.063, blue: 0.039),
+            permissionBackground: Color(red: 0.055, green: 0.157, blue: 0.094).opacity(0.4),
+            buttonTextColor: Color(red: 0.176, green: 0.416, blue: 0.271),
+            settingsAccent: Color(red: 0.490, green: 0.784, blue: 0.541),
+            accent: Color(red: 0.490, green: 0.784, blue: 0.541),
+            chevron: Color(red: 0.102, green: 0.251, blue: 0.157),
+            killButton: Color(red: 0.176, green: 0.416, blue: 0.271),
+            statusBadgeText: Color(red: 0.290, green: 0.600, blue: 0.408)
         ),
         material: .hudWindow,
-        cornerRadius: 6,
+        cornerRadius: 8,
         usesVibrancy: false,
         fontDesign: .monospaced,
         headerFontDesign: .monospaced,
         dotSize: 8,
+        borderWidth: 0.5
+    )
+
+    static let teletype = MonitorSkin(
+        id: "teletype",
+        name: "Teletype",
+        colors: SkinColors(
+            working: Color(red: 0.659, green: 0.188, blue: 0.125),
+            attention: Color(red: 0.769, green: 0.345, blue: 0.125),
+            done: Color(red: 0.102, green: 0.078, blue: 0.063),
+            starting: Color(red: 0.659, green: 0.620, blue: 0.541),
+            headerText: Color(red: 0.239, green: 0.204, blue: 0.165),
+            headerIcon: Color(red: 0.420, green: 0.373, blue: 0.306),
+            sessionTitle: Color(red: 0.102, green: 0.078, blue: 0.063),
+            sessionTitleStale: Color(red: 0.659, green: 0.620, blue: 0.541),
+            sessionSubtext: Color(red: 0.420, green: 0.373, blue: 0.306),
+            timestamp: Color(red: 0.420, green: 0.373, blue: 0.306),
+            divider: Color(red: 0.847, green: 0.792, blue: 0.659),
+            border: Color(red: 0.239, green: 0.204, blue: 0.165).opacity(0.15),
+            shadow: Color(red: 0.102, green: 0.078, blue: 0.063).opacity(0.18),
+            panelBackground: Color(red: 0.957, green: 0.918, blue: 0.835),
+            permissionBackground: Color(red: 0.659, green: 0.188, blue: 0.125).opacity(0.06),
+            buttonTextColor: Color(red: 0.420, green: 0.373, blue: 0.306),
+            settingsAccent: Color(red: 0.239, green: 0.204, blue: 0.165),
+            accent: Color(red: 0.239, green: 0.204, blue: 0.165),
+            chevron: Color(red: 0.659, green: 0.620, blue: 0.541),
+            killButton: Color(red: 0.659, green: 0.620, blue: 0.541),
+            statusBadgeText: Color(red: 0.239, green: 0.204, blue: 0.165)
+        ),
+        material: .hudWindow,
+        cornerRadius: 6,
+        usesVibrancy: false,
+        fontDesign: .default,
+        headerFontDesign: .serif,
+        dotSize: 7,
         borderWidth: 0.5
     )
 
@@ -162,7 +197,7 @@ struct MonitorSkin: Identifiable, Equatable {
         borderWidth: 0
     )
 
-    static let allSkins: [MonitorSkin] = [glass, obsidian, terminal]
+    static let allSkins: [MonitorSkin] = [glass, obsidian, terminal, teletype]
 
     static func skin(for id: String) -> MonitorSkin {
         allSkins.first(where: { $0.id == id }) ?? glass
@@ -197,8 +232,6 @@ struct MonitorConfig: Codable {
         var model: String
         var stability: Double
         var similarity_boost: Double
-        var voice_design_prompt: String?
-        var voice_design_name: String?
     }
     struct SayConfig: Codable {
         var voice: String
@@ -229,6 +262,29 @@ struct MonitorConfig: Codable {
     var voices: [SavedVoice]?
     var usage: UsageConfig?
     var glass: GlassConfig?
+
+    enum CodingKeys: String, CodingKey {
+        case tts_provider
+        case elevenlabs
+        case say
+        case announce
+        case skin
+        case voices
+        case usage
+        case glass
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        tts_provider = try container.decodeIfPresent(String.self, forKey: .tts_provider) ?? "say"
+        elevenlabs = try container.decode(ElevenLabsConfig.self, forKey: .elevenlabs)
+        say = try container.decode(SayConfig.self, forKey: .say)
+        announce = try container.decode(AnnounceConfig.self, forKey: .announce)
+        skin = try container.decodeIfPresent(String.self, forKey: .skin)
+        voices = try container.decodeIfPresent([SavedVoice].self, forKey: .voices)
+        usage = try container.decodeIfPresent(UsageConfig.self, forKey: .usage)
+        glass = try container.decodeIfPresent(GlassConfig.self, forKey: .glass)
+    }
 }
 
 // MARK: - ElevenLabs Voice Info
@@ -308,69 +364,6 @@ class VoiceFetcher: ObservableObject {
         }.resume()
     }
 
-    /// Design a voice from a text prompt, save it, and return the voice_id + name
-    func designVoice(prompt: String, name: String, completion: @escaping (String?, String?) -> Void) {
-        guard let apiKey = apiKey, !apiKey.isEmpty else { completion(nil, nil); return }
-        guard let designURL = URL(string: "https://api.elevenlabs.io/v1/text-to-voice/design") else { completion(nil, nil); return }
-
-        // Step 1: Generate preview
-        var request = URLRequest(url: designURL)
-        request.httpMethod = "POST"
-        request.setValue(apiKey, forHTTPHeaderField: "xi-api-key")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let body: [String: Any] = [
-            "voice_description": prompt,
-            "text": "Hello. A session just finished — your project is done and ready for review. Another session needs your attention, it looks like there is a permission prompt waiting. Everything else is still running smoothly.",
-            "model_id": "eleven_multilingual_ttv_v2",
-            "guidance_scale": 8,
-            "quality": 0.9
-        ]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            guard let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let previews = json["previews"] as? [[String: Any]],
-                  let first = previews.first,
-                  let generatedId = first["generated_voice_id"] as? String else {
-                completion(nil, nil)
-                return
-            }
-
-            // Step 2: Save as permanent voice
-            self?.saveDesignedVoice(generatedId: generatedId, name: name, prompt: prompt, completion: completion)
-        }.resume()
-    }
-
-    private func saveDesignedVoice(generatedId: String, name: String, prompt: String, completion: @escaping (String?, String?) -> Void) {
-        guard let apiKey = apiKey, !apiKey.isEmpty else { completion(nil, nil); return }
-        guard let url = URL(string: "https://api.elevenlabs.io/v1/text-to-voice") else { completion(nil, nil); return }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue(apiKey, forHTTPHeaderField: "xi-api-key")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let body: [String: Any] = [
-            "voice_name": name,
-            "voice_description": prompt,
-            "generated_voice_id": generatedId,
-            "labels": ["source": "claude-monitor"]
-        ]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
-        URLSession.shared.dataTask(with: request) { data, _, _ in
-            guard let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let voiceId = json["voice_id"] as? String else {
-                completion(nil, nil)
-                return
-            }
-            let voiceName = json["name"] as? String ?? name
-            completion(voiceId, voiceName)
-        }.resume()
-    }
 }
 
 class ConfigManager: ObservableObject {
@@ -410,6 +403,20 @@ class ConfigManager: ObservableObject {
         config?.skin ?? "glass"
     }
 
+    var ttsProvider: String {
+        config?.tts_provider ?? "say"
+    }
+
+    func setTTSProvider(_ provider: String) {
+        config?.tts_provider = provider
+        save()
+        objectWillChange.send()
+    }
+
+    var usesElevenLabsTTS: Bool {
+        ttsProvider == "cache" || ttsProvider == "elevenlabs"
+    }
+
     func setVoice(_ voiceId: String) {
         config?.elevenlabs.voice_id = voiceId
         save()
@@ -427,7 +434,7 @@ class ConfigManager: ObservableObject {
 
     func toggleUsage() {
         if config?.usage == nil {
-            config?.usage = MonitorConfig.UsageConfig(enabled: false)
+            config?.usage = MonitorConfig.UsageConfig(enabled: true)
         } else {
             config?.usage?.enabled.toggle()
         }
@@ -436,7 +443,7 @@ class ConfigManager: ObservableObject {
     }
 
     var usageEnabled: Bool {
-        config?.usage?.enabled ?? true
+        config?.usage?.enabled ?? false
     }
 
     func save() {
@@ -2164,6 +2171,7 @@ struct PulsingDot: View {
     let isPulsing: Bool
     var size: CGFloat = 8
 
+    @Environment(\.skin) private var skin
     @State private var scale: CGFloat = 1.0
 
     var body: some View {
@@ -2171,7 +2179,7 @@ struct PulsingDot: View {
             .fill(color)
             .frame(width: size, height: size)
             .scaleEffect(scale)
-            .shadow(color: color.opacity(0.6), radius: isPulsing ? 4 : 0)
+            .shadow(color: color.opacity(0.6), radius: (isPulsing && skin.id != "terminal") ? 4 : 0)
             .onAppear {
                 if isPulsing {
                     withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
@@ -2218,6 +2226,7 @@ struct SessionRowView: View {
                         .font(.system(size: 12, weight: .semibold, design: skin.fontDesign))
                         .foregroundColor(session.isStale ? skin.colors.sessionTitleStale : skin.colors.sessionTitle)
                         .lineLimit(1)
+                        .layoutPriority(1)
 
                     Text(session.displayAgent.uppercased())
                         .font(.system(size: 8, weight: .bold, design: .monospaced))
@@ -2228,8 +2237,9 @@ struct SessionRowView: View {
                             RoundedRectangle(cornerRadius: 4)
                                 .stroke(skin.colors.divider, lineWidth: 0.75)
                         )
+                        .fixedSize()
 
-                    Spacer()
+                    Spacer(minLength: 0)
 
                     if onKill != nil {
                         ZStack {
@@ -2254,6 +2264,7 @@ struct SessionRowView: View {
                     Text(session.elapsedString)
                         .font(.system(size: 10, design: .monospaced))
                         .foregroundColor(skin.colors.timestamp)
+                        .fixedSize()
                 }
 
                 if !session.last_prompt.isEmpty {
@@ -2399,8 +2410,12 @@ struct SettingsPopover: View {
     @Environment(\.skin) private var skin
     @State private var pastedVoiceId: String? = nil
     @State private var refreshed = false
-    @State private var isGenerating = false
-    @State private var generateResult: String? = nil
+
+    private let voiceModes: [(id: String, title: String, subtitle: String)] = [
+        ("say", "Vanilla say", "Built-in macOS speech"),
+        ("elevenlabs", "Live 11 Labs TTS", "Fresh API call on every announcement"),
+        ("cache", "Cached 11 Labs TTS", "Generate once, then replay instantly from cache")
+    ]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -2493,150 +2508,106 @@ struct SettingsPopover: View {
             if configManager.voiceEnabled {
                 Divider().background(skin.colors.divider)
 
-                // Current voice display
-                if let name = configManager.voiceName(for: configManager.currentVoiceId) {
-                    HStack(spacing: 4) {
-                        Text(name)
-                            .font(.system(size: 11, weight: .medium, design: skin.fontDesign))
-                            .foregroundColor(skin.colors.settingsAccent)
-                        Spacer()
-                        Text(String(configManager.currentVoiceId.prefix(8)))
-                            .font(.system(size: 9, design: .monospaced))
-                            .foregroundColor(skin.colors.divider.opacity(1.0))
-                    }
-                }
-
                 Text("Voice")
                     .font(.system(size: 9, weight: .medium, design: skin.headerFontDesign))
                     .foregroundColor(skin.colors.sessionSubtext)
                     .textCase(.uppercase)
 
-                if voiceFetcher.hasFetched || !(configManager.config?.voices ?? []).isEmpty {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 2) {
-                            ForEach(configManager.allVoices) { voice in
-                                let isSelected = configManager.currentVoiceId == voice.id
-                                Button {
-                                    configManager.setVoice(voice.id)
-                                    pastedVoiceId = nil
-                                } label: {
-                                    HStack(spacing: 6) {
-                                        Circle()
-                                            .fill(isSelected ? skin.colors.settingsAccent : skin.colors.divider)
-                                            .frame(width: 6, height: 6)
-                                        Text(voice.name)
-                                            .font(.system(size: 11, design: skin.fontDesign))
-                                            .foregroundColor(isSelected ? skin.colors.sessionTitle : skin.colors.sessionSubtext)
-                                            .lineLimit(1)
-                                        Spacer()
-                                    }
-                                    .padding(.vertical, 2)
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(voiceModes, id: \.id) { mode in
+                        let isSelected = configManager.ttsProvider == mode.id
+                        Button {
+                            configManager.setTTSProvider(mode.id)
+                        } label: {
+                            HStack(alignment: .top, spacing: 6) {
+                                Circle()
+                                    .fill(isSelected ? skin.colors.settingsAccent : skin.colors.divider)
+                                    .frame(width: 6, height: 6)
+                                    .padding(.top, 4)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(mode.title)
+                                        .font(.system(size: 11, design: skin.fontDesign))
+                                        .foregroundColor(isSelected ? skin.colors.sessionTitle : skin.colors.sessionSubtext)
+                                    Text(mode.subtitle)
+                                        .font(.system(size: 9, design: skin.fontDesign))
+                                        .foregroundColor(skin.colors.timestamp)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
-                                .buttonStyle(.plain)
+                                Spacer()
                             }
+                            .padding(.vertical, 2)
                         }
+                        .buttonStyle(.plain)
                     }
-                    .frame(maxHeight: 180)
-                } else {
-                    Text("Loading voices...")
-                        .font(.system(size: 10, design: skin.fontDesign))
-                        .foregroundColor(skin.colors.sessionSubtext)
                 }
 
-                Divider().background(skin.colors.divider)
-
-                // Paste voice ID from clipboard
-                Button {
-                    if let pasted = NSPasteboard.general.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines),
-                       !pasted.isEmpty {
-                        configManager.setVoice(pasted)
-                        pastedVoiceId = String(pasted.prefix(20))
-                        // Resolve name and persist to voice list
-                        let voiceId = pasted
-                        if let existing = configManager.voiceName(for: voiceId) {
-                            configManager.addVoice(id: voiceId, name: existing)
-                        } else {
-                            voiceFetcher.resolveVoiceName(id: voiceId) { name in
-                                DispatchQueue.main.async {
-                                    configManager.addVoice(id: voiceId, name: name ?? "Voice \(String(voiceId.prefix(8)))")
-                                }
-                            }
-                        }
-                    }
-                } label: {
+                if configManager.ttsProvider == "say" {
                     HStack(spacing: 4) {
-                        Image(systemName: "doc.on.clipboard")
-                            .font(.system(size: 9))
-                            .foregroundColor(skin.colors.sessionSubtext)
-                        Text("Paste voice ID")
-                            .font(.system(size: 10, design: skin.fontDesign))
-                            .foregroundColor(skin.colors.sessionSubtext)
+                        Text(configManager.config?.say.voice ?? "System voice")
+                            .font(.system(size: 11, weight: .medium, design: skin.fontDesign))
+                            .foregroundColor(skin.colors.settingsAccent)
                         Spacer()
+                        Text("macOS")
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundColor(skin.colors.divider.opacity(1.0))
                     }
-                }
-                .buttonStyle(.plain)
+                } else {
+                    Divider().background(skin.colors.divider)
 
-                if let pasted = pastedVoiceId {
-                    Text("Set to \(pasted)...")
-                        .font(.system(size: 9, design: .monospaced))
-                        .foregroundColor(skin.colors.done.opacity(0.6))
-                }
+                    if let name = configManager.voiceName(for: configManager.currentVoiceId) {
+                        HStack(spacing: 4) {
+                            Text(name)
+                                .font(.system(size: 11, weight: .medium, design: skin.fontDesign))
+                                .foregroundColor(skin.colors.settingsAccent)
+                            Spacer()
+                            Text(String(configManager.currentVoiceId.prefix(8)))
+                                .font(.system(size: 9, design: .monospaced))
+                                .foregroundColor(skin.colors.divider.opacity(1.0))
+                        }
+                    }
 
-                // Generate voice from design prompt
-                if let prompt = configManager.config?.elevenlabs.voice_design_prompt, !prompt.isEmpty {
                     Divider().background(skin.colors.divider)
 
                     Button {
-                        guard !isGenerating else { return }
-                        isGenerating = true
-                        generateResult = nil
-                        let voiceName = configManager.config?.elevenlabs.voice_design_name ?? "claude-monitor"
-                        voiceFetcher.designVoice(prompt: prompt, name: voiceName) { voiceId, name in
-                            DispatchQueue.main.async {
-                                isGenerating = false
-                                if let voiceId = voiceId, let name = name {
-                                    configManager.setVoice(voiceId)
-                                    configManager.addVoice(id: voiceId, name: name)
-                                    generateResult = name
-                                    voiceFetcher.fetchVoices()
-                                } else {
-                                    generateResult = "failed"
+                        if let pasted = NSPasteboard.general.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                           !pasted.isEmpty {
+                            configManager.setVoice(pasted)
+                            pastedVoiceId = String(pasted.prefix(20))
+                            let voiceId = pasted
+                            if let existing = configManager.voiceName(for: voiceId) {
+                                configManager.addVoice(id: voiceId, name: existing)
+                            } else {
+                                voiceFetcher.resolveVoiceName(id: voiceId) { name in
+                                    DispatchQueue.main.async {
+                                        configManager.addVoice(id: voiceId, name: name ?? "Voice \(String(voiceId.prefix(8)))")
+                                    }
                                 }
                             }
                         }
                     } label: {
                         HStack(spacing: 4) {
-                            if isGenerating {
-                                ProgressView()
-                                    .scaleEffect(0.5)
-                                    .frame(width: 10, height: 10)
-                            } else {
-                                Image(systemName: "wand.and.stars")
-                                    .font(.system(size: 9))
-                                    .foregroundColor(.purple.opacity(0.6))
-                            }
-                            Text(isGenerating ? "Generating..." : "Generate voice")
+                            Image(systemName: "doc.on.clipboard")
+                                .font(.system(size: 9))
+                                .foregroundColor(skin.colors.sessionSubtext)
+                            Text("Paste voice ID")
                                 .font(.system(size: 10, design: skin.fontDesign))
-                                .foregroundColor(isGenerating ? .purple.opacity(0.4) : .purple.opacity(0.6))
+                                .foregroundColor(skin.colors.sessionSubtext)
                             Spacer()
                         }
                     }
                     .buttonStyle(.plain)
-                    .disabled(isGenerating)
 
-                    if let result = generateResult {
-                        Text(result == "failed" ? "Generation failed" : "Created \"\(result)\"")
+                    if let pasted = pastedVoiceId {
+                        Text("Set to \(pasted)...")
                             .font(.system(size: 9, design: .monospaced))
-                            .foregroundColor(result == "failed" ? .red.opacity(0.6) : skin.colors.done.opacity(0.6))
+                            .foregroundColor(skin.colors.done.opacity(0.6))
                     }
                 }
             }
         }
         .padding(10)
         .frame(width: 200)
-        .background(
-            SkinAwareBackground(skin: skin, glassConfig: configManager.glassConfig)
-        )
+        .modifier(PopoverContentBackground(skin: skin, glassConfig: configManager.glassConfig))
     }
 }
 
@@ -2776,12 +2747,348 @@ struct UsagePopover: View {
         }
         .padding(10)
         .frame(width: 200)
-        .background(
-            SkinAwareBackground(skin: skin, glassConfig: configManager.glassConfig)
-        )
+        .modifier(PopoverContentBackground(skin: skin, glassConfig: configManager.glassConfig))
         .onAppear {
             fetcher.fetchIfStale()
         }
+    }
+}
+
+private enum MonitorPopoverKind {
+    case usage
+    case settings
+}
+
+private final class MonitorPopoverPanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { false }
+
+    init() {
+        super.init(
+            contentRect: NSRect(x: 0, y: 0, width: 200, height: 120),
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+
+        level = .floating
+        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        isOpaque = false
+        backgroundColor = .clear
+        hasShadow = false
+        isMovableByWindowBackground = false
+        hidesOnDeactivate = true
+    }
+}
+
+private struct MonitorPopoverAnchorReader: NSViewRepresentable {
+    let kind: MonitorPopoverKind
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        view.postsFrameChangedNotifications = true
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async {
+            MonitorPopoverManager.shared.register(anchorView: nsView, for: kind)
+        }
+    }
+}
+
+private struct MonitorPopoverSurface<Content: View>: View {
+    @ObservedObject var configManager: ConfigManager
+    let content: Content
+
+    init(configManager: ConfigManager, @ViewBuilder content: () -> Content) {
+        _configManager = ObservedObject(wrappedValue: configManager)
+        self.content = content()
+    }
+
+    private var skin: MonitorSkin { configManager.currentSkin }
+    private var panelShadow: MonitorPanelShadowStyle { shadowStyle(for: skin) }
+    private var surfaceShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: skin.cornerRadius, style: .continuous)
+    }
+
+    var body: some View {
+        content
+            .background(
+                Group {
+                    if skin.id == "glass" {
+                        SkinAwareBackground(skin: skin, glassConfig: configManager.glassConfig)
+                    }
+                }
+            )
+            .clipShape(surfaceShape)
+            .overlay(
+                Group {
+                    if skin.id == "obsidian" {
+                        surfaceShape
+                            .strokeBorder(
+                                LinearGradient(
+                                    stops: [
+                                        .init(color: Color(white: 1.0, opacity: 0.08), location: 0.0),
+                                        .init(color: Color(white: 1.0, opacity: 0.03), location: 0.15),
+                                        .init(color: .clear, location: 0.4),
+                                        .init(color: .clear, location: 1.0),
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 2.0
+                        )
+                    } else if skin.borderWidth > 0 {
+                        surfaceShape
+                            .strokeBorder(skin.colors.border, lineWidth: skin.borderWidth + 1)
+                    }
+                }
+                .allowsHitTesting(false)
+            )
+            .shadow(color: panelShadow.color, radius: panelShadow.radius, y: panelShadow.y)
+            .environment(\.skin, skin)
+    }
+}
+
+private final class MonitorPopoverManager {
+    static let shared = MonitorPopoverManager()
+
+    private final class WeakAnchorView {
+        weak var view: NSView?
+        init(_ view: NSView) { self.view = view }
+    }
+
+    private var anchors: [MonitorPopoverKind: WeakAnchorView] = [:]
+    private weak var parentWindow: NSWindow?
+    private weak var anchorView: NSView?
+    private var panel: MonitorPopoverPanel?
+    private var currentKind: MonitorPopoverKind?
+    private var localMonitor: Any?
+    private var globalMonitor: Any?
+    private var resignActiveObserver: Any?
+    private var parentWindowCloseObserver: Any?
+    private var sizeObserver: AnyCancellable?
+    private var skinObserver: AnyCancellable?
+
+    func register(anchorView: NSView, for kind: MonitorPopoverKind) {
+        anchors[kind] = WeakAnchorView(anchorView)
+    }
+
+    func toggle(
+        kind: MonitorPopoverKind,
+        configManager: ConfigManager,
+        usageFetcher: UsageFetcher,
+        sessionReader: SessionReader?
+    ) {
+        if currentKind == kind {
+            close()
+            return
+        }
+
+        show(
+            kind: kind,
+            configManager: configManager,
+            usageFetcher: usageFetcher,
+            sessionReader: sessionReader
+        )
+    }
+
+    func close() {
+        if let localMonitor {
+            NSEvent.removeMonitor(localMonitor)
+            self.localMonitor = nil
+        }
+        if let globalMonitor {
+            NSEvent.removeMonitor(globalMonitor)
+            self.globalMonitor = nil
+        }
+        if let resignActiveObserver {
+            NotificationCenter.default.removeObserver(resignActiveObserver)
+            self.resignActiveObserver = nil
+        }
+        if let parentWindowCloseObserver {
+            NotificationCenter.default.removeObserver(parentWindowCloseObserver)
+            self.parentWindowCloseObserver = nil
+        }
+        sizeObserver?.cancel()
+        sizeObserver = nil
+        skinObserver?.cancel()
+        skinObserver = nil
+        if let panel, let parentWindow {
+            parentWindow.removeChildWindow(panel)
+            panel.orderOut(nil)
+        } else {
+            panel?.orderOut(nil)
+        }
+        anchorView = nil
+        panel = nil
+        parentWindow = nil
+        currentKind = nil
+    }
+
+    private func show(
+        kind: MonitorPopoverKind,
+        configManager: ConfigManager,
+        usageFetcher: UsageFetcher,
+        sessionReader: SessionReader?
+    ) {
+        close()
+
+        guard let anchorView = anchors[kind]?.view,
+              let anchorWindow = anchorView.window else { return }
+
+        let rootView = buildRootView(
+            kind: kind,
+            configManager: configManager,
+            usageFetcher: usageFetcher,
+            sessionReader: sessionReader
+        )
+        let hostingView = ClickHostingView(rootView: rootView)
+        hostingView.wantsLayer = true
+        hostingView.layer?.backgroundColor = .clear
+        hostingView.layer?.cornerRadius = configManager.currentSkin.cornerRadius
+        hostingView.layer?.cornerCurve = .continuous
+        hostingView.layer?.masksToBounds = true
+
+        let fittingSize = hostingView.fittingSize
+        hostingView.frame = NSRect(origin: .zero, size: fittingSize)
+
+        let panel = MonitorPopoverPanel()
+        panel.contentView = hostingView
+        panel.setContentSize(fittingSize)
+
+        position(panel: panel, relativeTo: anchorView)
+        anchorWindow.addChildWindow(panel, ordered: .above)
+        panel.orderFrontRegardless()
+
+        self.parentWindow = anchorWindow
+        self.anchorView = anchorView
+        self.panel = panel
+        self.currentKind = kind
+        installSizeObserver(hostingView: hostingView)
+        installSkinObserver(hostingView: hostingView, configManager: configManager)
+        installCloseMonitors()
+    }
+
+    private func buildRootView(
+        kind: MonitorPopoverKind,
+        configManager: ConfigManager,
+        usageFetcher: UsageFetcher,
+        sessionReader: SessionReader?
+    ) -> AnyView {
+        AnyView(
+            MonitorPopoverSurface(configManager: configManager) {
+                switch kind {
+                case .usage:
+                    UsagePopover(fetcher: usageFetcher, configManager: configManager)
+                case .settings:
+                    SettingsPopover(
+                        configManager: configManager,
+                        voiceFetcher: configManager.voiceFetcher,
+                        usageFetcher: usageFetcher,
+                        sessionReader: sessionReader
+                    )
+                }
+            }
+        )
+    }
+
+    private func position(panel: NSPanel, relativeTo anchorView: NSView) {
+        guard let anchorWindow = anchorView.window else { return }
+
+        let anchorRectInWindow = anchorView.convert(anchorView.bounds, to: nil)
+        let anchorRectOnScreen = anchorWindow.convertToScreen(anchorRectInWindow)
+        let size = panel.contentView?.fittingSize ?? panel.frame.size
+        let screenFrame = anchorWindow.screen?.visibleFrame ?? NSScreen.main?.visibleFrame ?? .zero
+        let padding: CGFloat = 8
+        let gap: CGFloat = 6
+
+        var x = anchorRectOnScreen.midX - (size.width / 2)
+        x = min(max(x, screenFrame.minX + padding), screenFrame.maxX - size.width - padding)
+
+        var y = anchorRectOnScreen.minY - size.height - gap
+        if y < screenFrame.minY + padding {
+            y = anchorRectOnScreen.maxY + gap
+        }
+
+        panel.setFrame(NSRect(x: x, y: y, width: size.width, height: size.height), display: true)
+    }
+
+    private func installCloseMonitors() {
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown, .keyDown]) { [weak self] event in
+            self?.handleLocalEvent(event)
+            return event
+        }
+
+        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] _ in
+            self?.close()
+        }
+
+        resignActiveObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.close()
+        }
+
+        if let parentWindow {
+            parentWindowCloseObserver = NotificationCenter.default.addObserver(
+                forName: NSWindow.willCloseNotification,
+                object: parentWindow,
+                queue: .main
+            ) { [weak self] _ in
+                self?.close()
+            }
+        }
+    }
+
+    private func handleLocalEvent(_ event: NSEvent) {
+        if event.type == .keyDown, event.keyCode == 53 {
+            close()
+            return
+        }
+
+        guard let panel else { return }
+        if event.window === panel { return }
+        if isEventInsideAnyAnchor(event) { return }
+        close()
+    }
+
+    private func installSizeObserver(hostingView: NSHostingView<AnyView>) {
+        sizeObserver?.cancel()
+        sizeObserver = hostingView.publisher(for: \.fittingSize)
+            .debounce(for: .milliseconds(20), scheduler: RunLoop.main)
+            .sink { [weak self, weak hostingView] newSize in
+                guard let self, let panel = self.panel, let anchorView = self.anchorView else { return }
+                hostingView?.frame = NSRect(origin: .zero, size: newSize)
+                panel.setContentSize(newSize)
+                self.position(panel: panel, relativeTo: anchorView)
+            }
+    }
+
+    private func installSkinObserver(hostingView: NSHostingView<AnyView>, configManager: ConfigManager) {
+        skinObserver?.cancel()
+        skinObserver = configManager.$currentSkin
+            .sink { [weak hostingView] skin in
+                hostingView?.layer?.cornerRadius = skin.cornerRadius
+                hostingView?.layer?.cornerCurve = .continuous
+                hostingView?.layer?.masksToBounds = true
+            }
+    }
+
+    private func isEventInsideAnyAnchor(_ event: NSEvent) -> Bool {
+        for anchor in anchors.values {
+            guard let view = anchor.view,
+                  let window = view.window,
+                  event.window === window else { continue }
+            let point = view.convert(event.locationInWindow, from: nil)
+            if view.bounds.contains(point) {
+                return true
+            }
+        }
+        return false
     }
 }
 
@@ -2794,8 +3101,6 @@ struct HeaderBar: View {
     var sessionReader: SessionReader?
     @Binding var isExpanded: Bool
     @Environment(\.skin) private var skin
-    @State private var showSettings = false
-    @State private var showUsage = false
 
     var attentionCount: Int { sessions.filter { $0.status == "attention" }.count }
     var workingCount: Int { sessions.filter { $0.status == "working" }.count }
@@ -2858,31 +3163,35 @@ struct HeaderBar: View {
 
                 if configManager.usageEnabled {
                     Button {
-                        showUsage.toggle()
+                        MonitorPopoverManager.shared.toggle(
+                            kind: .usage,
+                            configManager: configManager,
+                            usageFetcher: usageFetcher,
+                            sessionReader: sessionReader
+                        )
                     } label: {
                         Image(systemName: "chart.bar.fill")
                             .font(.system(size: 8))
                             .foregroundColor(usageIconColor)
                     }
                     .buttonStyle(.plain)
-                    .popover(isPresented: $showUsage, arrowEdge: .bottom) {
-                        UsagePopover(fetcher: usageFetcher, configManager: configManager)
-                            .environment(\.skin, skin)
-                    }
+                    .background(MonitorPopoverAnchorReader(kind: .usage))
                 }
 
                 Button {
-                    showSettings.toggle()
+                    MonitorPopoverManager.shared.toggle(
+                        kind: .settings,
+                        configManager: configManager,
+                        usageFetcher: usageFetcher,
+                        sessionReader: sessionReader
+                    )
                 } label: {
                     Image(systemName: "gearshape")
                         .font(.system(size: 8))
                         .foregroundColor(skin.colors.chevron)
                 }
                 .buttonStyle(.plain)
-                .popover(isPresented: $showSettings, arrowEdge: .bottom) {
-                    SettingsPopover(configManager: configManager, voiceFetcher: configManager.voiceFetcher, usageFetcher: usageFetcher, sessionReader: sessionReader)
-                        .environment(\.skin, skin)
-                }
+                .background(MonitorPopoverAnchorReader(kind: .settings))
             }
         }
         .padding(.horizontal, 12)
@@ -2901,6 +3210,109 @@ struct HeaderBar: View {
 
 // MARK: - Skin-Aware Background
 
+private struct TeletypeGrainOverlay: View {
+    @State private var normalizedDots: [CGPoint] = []
+
+    var body: some View {
+        GeometryReader { geometry in
+            Canvas { context, size in
+                let grainColor = Color(red: 0.922, green: 0.878, blue: 0.784).opacity(0.4)
+                for dot in normalizedDots {
+                    let rect = CGRect(
+                        x: dot.x * size.width,
+                        y: dot.y * size.height,
+                        width: 1,
+                        height: 1
+                    )
+                    context.fill(Path(ellipseIn: rect), with: .color(grainColor))
+                }
+            }
+            .onAppear {
+                if normalizedDots.isEmpty {
+                    normalizedDots = Self.makeDots(count: 400)
+                }
+            }
+            .onChange(of: geometry.size) { _, _ in
+                if normalizedDots.isEmpty {
+                    normalizedDots = Self.makeDots(count: 400)
+                }
+            }
+        }
+        .allowsHitTesting(false)
+    }
+
+    private static func makeDots(count: Int) -> [CGPoint] {
+        var generator = SeededGenerator(seed: 0x54454C45)
+        return (0..<count).map { _ in
+            CGPoint(x: Double.random(in: 0...1, using: &generator), y: Double.random(in: 0...1, using: &generator))
+        }
+    }
+}
+
+private struct TeletypePlatenRulesOverlay: View {
+    var body: some View {
+        Canvas { context, size in
+            var path = Path()
+            for y in stride(from: 24.0, through: size.height, by: 24.0) {
+                path.move(to: CGPoint(x: 0, y: y))
+                path.addLine(to: CGPoint(x: size.width, y: y))
+            }
+            context.stroke(
+                path,
+                with: .color(Color(red: 0.847, green: 0.792, blue: 0.659).opacity(0.5)),
+                lineWidth: 0.5
+            )
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+private struct TeletypeBackground: View {
+    var body: some View {
+        ZStack {
+            Color(red: 0.957, green: 0.918, blue: 0.835)
+            TeletypeGrainOverlay()
+            TeletypePlatenRulesOverlay()
+        }
+    }
+}
+
+private struct SeededGenerator: RandomNumberGenerator {
+    private var state: UInt64
+
+    init(seed: UInt64) {
+        state = seed
+    }
+
+    mutating func next() -> UInt64 {
+        state = state &* 6364136223846793005 &+ 1
+        return state
+    }
+}
+
+private struct MonitorPanelShadowStyle {
+    let color: Color
+    let radius: CGFloat
+    let y: CGFloat
+}
+
+private func shadowStyle(for skin: MonitorSkin) -> MonitorPanelShadowStyle {
+    switch skin.id {
+    case "obsidian":
+        return MonitorPanelShadowStyle(color: .black.opacity(0.7), radius: 16, y: 8)
+    case "terminal":
+        return MonitorPanelShadowStyle(color: .black.opacity(0.45), radius: 8, y: 3)
+    case "teletype":
+        return MonitorPanelShadowStyle(
+            color: Color(red: 0.102, green: 0.078, blue: 0.063).opacity(0.18),
+            radius: 18,
+            y: 4
+        )
+    default:
+        return MonitorPanelShadowStyle(color: skin.colors.shadow, radius: 12, y: 4)
+    }
+}
+
 struct SkinAwareBackground: View {
     let skin: MonitorSkin
     var glassConfig: MonitorConfig.GlassConfig = ConfigManager.defaultGlass
@@ -2918,6 +3330,8 @@ struct SkinAwareBackground: View {
                     endPoint: .bottom
                 )
             }
+        } else if skin.id == "teletype" {
+            TeletypeBackground()
         } else if skin.usesVibrancy {
             VisualEffectView(
                 material: skin.material,
@@ -2937,6 +3351,22 @@ struct SkinAwareBackground: View {
     }
 }
 
+private struct PopoverContentBackground: ViewModifier {
+    let skin: MonitorSkin
+    let glassConfig: MonitorConfig.GlassConfig
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if skin.id == "glass" {
+            content
+        } else {
+            content.background(
+                SkinAwareBackground(skin: skin, glassConfig: glassConfig)
+            )
+        }
+    }
+}
+
 // MARK: - Main Content View
 
 struct MonitorContentView: View {
@@ -2946,6 +3376,10 @@ struct MonitorContentView: View {
     @State private var isExpanded: Bool = UserDefaults.standard.object(forKey: "monitorExpanded") as? Bool ?? true
 
     var skin: MonitorSkin { configManager.currentSkin }
+    private var panelShadow: MonitorPanelShadowStyle { shadowStyle(for: skin) }
+    private var surfaceShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: skin.cornerRadius, style: .continuous)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -2993,13 +3427,13 @@ struct MonitorContentView: View {
         .background(
             SkinAwareBackground(skin: skin, glassConfig: configManager.glassConfig)
         )
-        .clipShape(RoundedRectangle(cornerRadius: skin.cornerRadius))
+        .clipShape(surfaceShape)
         .overlay(
             Group {
                 if skin.id == "obsidian" {
                     // Obsidian: top-edge highlight only
-                    RoundedRectangle(cornerRadius: skin.cornerRadius)
-                        .stroke(
+                    surfaceShape
+                        .strokeBorder(
                             LinearGradient(
                                 stops: [
                                     .init(color: Color(white: 1.0, opacity: 0.08), location: 0.0),
@@ -3013,15 +3447,13 @@ struct MonitorContentView: View {
                             lineWidth: 2.0
                         )
                 } else if skin.borderWidth > 0 {
-                    RoundedRectangle(cornerRadius: skin.cornerRadius)
-                        .stroke(skin.colors.border, lineWidth: skin.borderWidth + 1)
+                    surfaceShape
+                        .strokeBorder(skin.colors.border, lineWidth: skin.borderWidth + 1)
                 }
             }
             .allowsHitTesting(false)
         )
-        .shadow(color: skin.id == "obsidian" ? .black.opacity(0.7) : skin.colors.shadow,
-                radius: skin.id == "obsidian" ? 16 : 12,
-                y: skin.id == "obsidian" ? 8 : 4)
+        .shadow(color: panelShadow.color, radius: panelShadow.radius, y: panelShadow.y)
         .environment(\.skin, skin)
     }
 }
@@ -3030,18 +3462,18 @@ struct MonitorContentView: View {
 
 class ThinScroller: NSScroller {
     override class func scrollerWidth(for controlSize: ControlSize, scrollerStyle: Style) -> CGFloat {
-        return 5
+        return 4
     }
 
     override func drawKnob() {
         var knobRect = rect(for: .knob)
         knobRect = NSRect(
-            x: bounds.width - 4,
+            x: bounds.width - 3,
             y: knobRect.origin.y + 2,
-            width: 3,
+            width: 2,
             height: max(knobRect.height - 4, 8)
         )
-        let path = NSBezierPath(roundedRect: knobRect, xRadius: 1.5, yRadius: 1.5)
+        let path = NSBezierPath(roundedRect: knobRect, xRadius: 1, yRadius: 1)
         NSColor.white.withAlphaComponent(0.2).setFill()
         path.fill()
     }
@@ -3062,8 +3494,13 @@ struct ScrollbarStyler: NSViewRepresentable {
                     scrollView.scrollerStyle = .overlay
                     scrollView.hasVerticalScroller = true
                     scrollView.autohidesScrollers = true
+                    scrollView.drawsBackground = false
+                    scrollView.backgroundColor = .clear
+                    scrollView.borderType = .noBorder
+                    scrollView.contentView.drawsBackground = false
                     let scroller = ThinScroller()
                     scroller.controlSize = .mini
+                    scroller.scrollerStyle = .overlay
                     scrollView.verticalScroller = scroller
                     break
                 }
@@ -3193,7 +3630,6 @@ class ClickHostingView<Content: View>: NSHostingView<Content> {
         // Corner radius is set externally via updateCornerRadius() to match the active skin.
         wantsLayer = true
         layer?.backgroundColor = .clear
-        layer?.masksToBounds = true
     }
 }
 
@@ -3302,6 +3738,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func updateCornerRadius() {
         guard let hostingView = panel?.contentView else { return }
         hostingView.layer?.cornerRadius = configManager.currentSkin.cornerRadius
+        hostingView.layer?.cornerCurve = .continuous
         hostingView.layer?.masksToBounds = true
     }
 

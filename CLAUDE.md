@@ -47,13 +47,13 @@ Ask which events they want voice announcements for:
 
 ### Usage tracking (`usage.enabled`)
 
-Ask if they want to see their Claude Code quota (session + weekly) in the monitor. This reads OAuth credentials from macOS Keychain (one-time permission prompt). Default: on.
+Ask if they want to see their Claude Code quota (session + weekly) in the monitor. This reads OAuth credentials from macOS Keychain (one-time permission prompt). Default: off.
 
 ### After asking preferences
 
 1. Create `config.json` from `config.default.json` with their chosen settings
 2. If they chose `cache` or `elevenlabs`, help them set up their ElevenLabs API key (copy `.env.example` to `~/.env`, paste key)
-3. If they chose `cache` or `elevenlabs`, after building, show them the "Generate voice" button in the settings popover to create their custom AI voice
+3. If they chose `cache` or `elevenlabs`, help them set or paste an ElevenLabs `voice_id` after build if they want a specific voice
 
 ## Build & run
 

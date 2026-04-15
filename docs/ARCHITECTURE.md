@@ -92,10 +92,9 @@ Three providers, same interface. The provider is selected by `tts_provider` in `
 - Temp file is deleted after 30 seconds
 - Falls back to macOS `say` on API failure
 
-**Voice generation flow** (one-time, via the SwiftUI settings popover):
-1. POST to `/v1/text-to-voice/design` with the voice design prompt → returns a `generated_voice_id`
-2. POST to `/v1/text-to-voice` with the generated ID → saves permanently to your ElevenLabs account, returns a `voice_id`
-3. The `voice_id` is stored in `config.json` and used by both `cache` and `elevenlabs` providers
+**Voice selection flow**:
+1. A `voice_id` is stored in `config.json`
+2. The `voice_id` is used by both `cache` and `elevenlabs` providers
 
 All providers run in the background (`&` + `disown`) to avoid blocking the hook.
 

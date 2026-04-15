@@ -49,7 +49,7 @@ Since announcements follow predictable patterns (`"project-name done"`, `"projec
    # edit ~/.env and paste your ELEVENLABS_API_KEY
    ```
 
-3. **Generate a voice** -- open the settings popover (gear icon) and click **Generate voice**. This designs a custom AI voice from the included prompt, saves it to your ElevenLabs account, and sets the `voice_id` in your config. One click, done.
+3. **Choose a voice ID** -- either use an existing voice from your ElevenLabs account or copy a `voice_id` to your clipboard and use **Paste voice ID** in the settings popover.
 
 4. **Switch to cache mode** -- update your `config.json`:
    ```json
@@ -98,10 +98,7 @@ rm ~/.claude/voice-cache/*.mp3
 
 ### Other ways to pick a voice
 
-- **Browse your library** -- the voice picker in settings shows all voices from your ElevenLabs account
 - **Paste a voice ID** -- copy any voice ID to your clipboard, click "Paste voice ID" in settings -- the app resolves the name and saves it
-- **Customize the design prompt** -- edit `elevenlabs.voice_design_prompt` in `config.json` before generating
-
 ## ElevenLabs real-time (no caching)
 
 If you prefer fresh API calls for every announcement (e.g., you're experimenting with voice settings), set `tts_provider` to `"elevenlabs"` instead of `"cache"`. Same setup as above, but audio is generated on each announcement and not saved.

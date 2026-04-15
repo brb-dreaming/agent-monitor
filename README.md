@@ -215,6 +215,12 @@ Running Codex windows are discovered automatically and show up in the monitor wi
 
 Voice announcements work out of the box using macOS built-in speech. No setup needed.
 
+Fresh installs default to:
+- `tts_provider: "say"`
+- `say.voice: "Zoe (Premium)"`
+- `skin: "glass"`
+- `usage.enabled: false`
+
 | Provider | Quality | Setup | Latency |
 |----------|---------|-------|---------|
 | `say` (default) | Good | None | Instant |
@@ -223,19 +229,24 @@ Voice announcements work out of the box using macOS built-in speech. No setup ne
 
 Most users should start with `say` and never think about it again. If you want AI-quality voice, the `cache` provider is worth trying: the first time a phrase is announced ("my-project done"), it calls ElevenLabs, saves the MP3 to `~/.claude/voice-cache/`, and every future announcement of that phrase plays back instantly from disk (~10ms, no network). Since announcements follow predictable patterns, you hit the API a handful of times on your first day and never again.
 
+For ElevenLabs modes, you need two things:
+- an `ELEVENLABS_API_KEY` in the file pointed to by `elevenlabs.env_file`
+- an ElevenLabs `voice_id` in `config.json`, or pasted through the settings panel with **Paste voice ID**
+
 All providers fall back to macOS `say` automatically if anything goes wrong.
 
-For ElevenLabs setup, phrase tuning, cache management, and voice customization, see [docs/VOICE.md](docs/VOICE.md).
+For ElevenLabs setup, phrase tuning, cache management, and choosing a `voice_id`, see [docs/VOICE.md](docs/VOICE.md).
 
 ## Skins
 
-3 built-in themes, switchable from the settings popover:
+4 built-in themes, switchable from the settings popover:
 
 | Skin | Style | Background |
 |------|-------|------------|
 | **Glass** (default) | Pure frosted glass, white text, colored dots only | Transparent with background blur |
 | **Obsidian** | Dark neumorphic, carved-from-shadow depth | Solid dark gradient |
-| **Terminal** | Retro phosphor green CRT, monospaced | Near-black with green tint |
+| **Terminal** | Refined green-phosphor terminal, monospaced | Near-black with green tint |
+| **Teletype** | Warm paper terminal with ink-and-ribbon accents | Opaque cream paper with subtle texture |
 
 Set `"skin"` in `config.json` or use the picker in the settings popover. See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) for details.
 
@@ -321,12 +332,14 @@ Full config reference: [docs/CONFIGURATION.md](docs/CONFIGURATION.md)
     "on_start": false,
     "volume": 0.5
   },
-  "usage": { "enabled": true },
+  "usage": { "enabled": false },
   "skin": "glass"
 }
 ```
 
 When you change settings through the UI, changes are written to `config.json` immediately. To reset to defaults, delete `config.json` and rebuild.
+
+If you switch `tts_provider` to `cache` or `elevenlabs`, also set `elevenlabs.voice_id` in `config.json` or use **Paste voice ID** in the settings panel.
 
 ## Troubleshooting
 
@@ -340,6 +353,7 @@ See [Troubleshooting Guide](docs/TROUBLESHOOTING.md) for detailed solutions. Qui
 | Click doesn't switch tabs | Check that `terminal_session_id` is set in the session JSON |
 | No voice | Verify `announce.enabled` is `true` and `volume` > `0` |
 | Wrong voice | Run `say -v '?'` to find the exact voice name, update `say.voice` |
+| ElevenLabs mode is silent | Verify `tts_provider`, `elevenlabs.env_file`, and `elevenlabs.voice_id` are all set correctly |
 | Panel gone | `pkill -9 claude_monitor && ~/.claude/monitor/build.sh` |
 | Wrong position | `defaults delete claude_monitor monitorX && defaults delete claude_monitor monitorY` then rebuild |
 | Usage shows "No credentials" | Log in to Claude Code via OAuth (`claude login`). Or disable usage tracking in settings |

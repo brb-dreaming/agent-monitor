@@ -15,9 +15,7 @@ Changes are picked up by the hook script on the next event and by the SwiftUI ap
     "env_file": "~/.env",
     "model": "eleven_multilingual_v2",
     "stability": 0.5,
-    "similarity_boost": 0.75,
-    "voice_design_prompt": "Soft, androgynous male voice with a clear synthetic quality...",
-    "voice_design_name": "claude-monitor"
+    "similarity_boost": 0.75
   },
   "say": {
     "voice": "Zoe (Premium)",
@@ -31,7 +29,7 @@ Changes are picked up by the hook script on the next event and by the SwiftUI ap
     "volume": 0.5
   },
   "usage": {
-    "enabled": true
+    "enabled": false
   },
   "skin": "glass",
   "voices": []
@@ -48,7 +46,8 @@ Visual theme for the floating panel. Changeable from the settings popover or dir
 |-------|-------------|
 | `"glass"` | Pure frosted glass with background blur (default) |
 | `"obsidian"` | Dark neumorphic, carved-from-shadow depth |
-| `"terminal"` | Retro phosphor green CRT, monospaced |
+| `"terminal"` | Refined green-phosphor terminal, monospaced |
+| `"teletype"` | Warm paper terminal with ink-and-ribbon accents |
 
 ### `tts_provider`
 
@@ -64,22 +63,17 @@ Which TTS engine to use for voice announcements.
 
 ElevenLabs configuration. Used when `tts_provider` is `"cache"` or `"elevenlabs"`.
 
-The ElevenLabs integration has two phases:
-
-1. **Voice generation** (one-time) — click "Generate voice" in settings to create a custom AI voice from `voice_design_prompt`. The voice is permanently saved to your ElevenLabs account and its `voice_id` is stored in config.
-2. **Announcements** (ongoing) — each announcement ("project done", "backend needs attention") is a short real-time API call using the saved `voice_id`. Usage is minimal since announcements are only a few words.
+Announcements are short real-time API calls using the configured `voice_id`. Usage is minimal since announcements are only a few words.
 
 If the API call fails, the monitor falls back to macOS `say` for that announcement.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `env_file` | string | `"~/.env"` | Path to `.env` file containing `ELEVENLABS_API_KEY` (supports `~`) |
-| `voice_id` | string | — | ElevenLabs voice ID to use for TTS. Set automatically when you generate or select a voice in the settings popover |
+| `voice_id` | string | — | ElevenLabs voice ID to use for TTS. Set by editing config directly or using Paste voice ID in the settings popover |
 | `model` | string | `"eleven_multilingual_v2"` | ElevenLabs model ID for real-time announcements |
 | `stability` | number | `0.5` | Voice stability (0.0–1.0). Higher = more consistent, lower = more expressive |
 | `similarity_boost` | number | `0.75` | Voice similarity boost (0.0–1.0). Higher = closer to the original voice |
-| `voice_design_prompt` | string | *(included)* | Text prompt describing the voice to generate. Used by the "Generate voice" button in settings. Customize this before generating to get a different voice character |
-| `voice_design_name` | string | `"claude-monitor"` | Name for the generated voice in your ElevenLabs account |
 
 ### `say`
 
@@ -108,11 +102,11 @@ Controls the usage quota tracking feature. When disabled, no credentials are rea
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `enabled` | boolean | `true` | Toggle usage tracking on/off. Also controllable from the settings popover. When off, the bar chart icon is hidden and no credentials are accessed |
+| `enabled` | boolean | `false` | Toggle usage tracking on/off. Also controllable from the settings popover. When off, the bar chart icon is hidden and no credentials are accessed |
 
 ### `voices`
 
-Array of saved voices that appear in the settings voice picker. Voices are added here automatically when you generate a voice, paste a voice ID, or select from your library.
+Array of saved voices persisted in config after you paste a voice ID or after the app resolves a voice name from ElevenLabs.
 
 ```json
 {
@@ -122,7 +116,7 @@ Array of saved voices that appear in the settings voice picker. Voices are added
 }
 ```
 
-The voice picker shows these saved voices **plus** any voices from your ElevenLabs library (fetched via API on launch). Saved voices always appear first.
+These saved voices are used for name resolution and display alongside the active `voice_id`.
 
 ## ElevenLabs `.env` File
 
@@ -136,7 +130,6 @@ cp .env.example ~/.env
 Point to it with `elevenlabs.env_file` in `config.json`. The path supports `~` for home directory.
 
 The API key is used for:
-- **Voice generation** (one-time) — designing and saving a custom voice to your ElevenLabs account
 - **Announcements** (ongoing) — real-time text-to-speech for short status phrases
 - **Voice library** — fetching your voices for the picker in settings
 - **Voice name resolution** — looking up a voice name when you paste a voice ID
@@ -193,8 +186,7 @@ Click the gear icon in the panel header to access settings at runtime:
 - **Refresh sessions** — discovers running Claude Code sessions that hooks missed (e.g., started before hooks were configured) and re-reads the sessions directory
 - **Usage tracking on/off** — toggles `usage.enabled`. When off, hides the bar chart icon and stops all credential access and API polling
 - **Voice on/off** — toggles `announce.enabled`
-- **Voice picker** — select from saved + library voices
+- **Voice mode picker** — choose between `say`, live ElevenLabs, and cached ElevenLabs
 - **Paste voice ID** — reads your clipboard, resolves the voice name via API, saves it to the `voices` array
-- **Generate voice** — designs a custom AI voice from `voice_design_prompt`, saves it to your ElevenLabs account, and sets it as the active voice. Only appears when a design prompt is configured.
 
 Changes made through the popover are persisted to `config.json` immediately.
