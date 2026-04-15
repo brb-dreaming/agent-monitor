@@ -3,6 +3,220 @@ import SwiftUI
 import Combine
 import Security
 
+// MARK: - Skin System
+
+struct SkinColors {
+    let working: Color
+    let attention: Color
+    let done: Color
+    let starting: Color
+    let headerText: Color
+    let headerIcon: Color
+    let sessionTitle: Color
+    let sessionTitleStale: Color
+    let sessionSubtext: Color
+    let timestamp: Color
+    let divider: Color
+    let border: Color
+    let shadow: Color
+    let panelBackground: Color
+    let permissionBackground: Color
+    let buttonTextColor: Color
+    let settingsAccent: Color
+    let accent: Color
+    let chevron: Color
+    let killButton: Color
+    let statusBadgeText: Color
+
+    func statusColor(for status: String) -> Color {
+        switch status {
+        case "starting":  return starting
+        case "working":   return working
+        case "done":      return done
+        case "attention": return attention
+        default:          return starting
+        }
+    }
+}
+
+struct MonitorSkin: Identifiable, Equatable {
+    let id: String
+    let name: String
+    let colors: SkinColors
+    let material: NSVisualEffectView.Material
+    let cornerRadius: CGFloat
+    let usesVibrancy: Bool
+    let fontDesign: Font.Design
+    let headerFontDesign: Font.Design
+    let dotSize: CGFloat
+    let borderWidth: CGFloat
+
+    static func == (lhs: MonitorSkin, rhs: MonitorSkin) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    // MARK: - Built-in Skins
+
+    static let glass = MonitorSkin(
+        id: "glass",
+        name: "Glass",
+        colors: SkinColors(
+            working: .cyan,
+            attention: .orange,
+            done: Color(red: 0.3, green: 0.9, blue: 0.4),
+            starting: Color(white: 0.5),
+            headerText: .white.opacity(0.9),
+            headerIcon: .white.opacity(0.6),
+            sessionTitle: .white,
+            sessionTitleStale: .white.opacity(0.35),
+            sessionSubtext: .white.opacity(0.45),
+            timestamp: .white.opacity(0.35),
+            divider: .white.opacity(0.08),
+            border: .white.opacity(0.15),
+            shadow: .black.opacity(0.25),
+            panelBackground: .clear,
+            permissionBackground: .orange.opacity(0.05),
+            buttonTextColor: .white.opacity(0.5),
+            settingsAccent: .white.opacity(0.8),
+            accent: .white.opacity(0.8),
+            chevron: .white.opacity(0.25),
+            killButton: .white.opacity(0.35),
+            statusBadgeText: .white.opacity(0.5)
+        ),
+        material: .hudWindow,
+        cornerRadius: 16,
+        usesVibrancy: true,
+        fontDesign: .default,
+        headerFontDesign: .default,
+        dotSize: 8,
+        borderWidth: 0.5
+    )
+
+    static let terminal = MonitorSkin(
+        id: "terminal",
+        name: "Terminal",
+        colors: SkinColors(
+            working: Color(red: 0.659, green: 0.941, blue: 0.690),
+            attention: Color(red: 1.000, green: 0.667, blue: 0.239),
+            done: Color(red: 0.490, green: 0.784, blue: 0.541),
+            starting: Color(red: 0.055, green: 0.157, blue: 0.094),
+            headerText: Color(red: 0.490, green: 0.784, blue: 0.541),
+            headerIcon: Color(red: 0.176, green: 0.416, blue: 0.271),
+            sessionTitle: Color(red: 0.490, green: 0.784, blue: 0.541),
+            sessionTitleStale: Color(red: 0.102, green: 0.251, blue: 0.157),
+            sessionSubtext: Color(red: 0.176, green: 0.416, blue: 0.271),
+            timestamp: Color(red: 0.176, green: 0.416, blue: 0.271),
+            divider: Color(red: 0.055, green: 0.157, blue: 0.094),
+            border: Color(red: 0.290, green: 0.600, blue: 0.408).opacity(0.6),
+            shadow: .black.opacity(0.45),
+            panelBackground: Color(red: 0.024, green: 0.063, blue: 0.039),
+            permissionBackground: Color(red: 0.055, green: 0.157, blue: 0.094).opacity(0.4),
+            buttonTextColor: Color(red: 0.176, green: 0.416, blue: 0.271),
+            settingsAccent: Color(red: 0.490, green: 0.784, blue: 0.541),
+            accent: Color(red: 0.490, green: 0.784, blue: 0.541),
+            chevron: Color(red: 0.102, green: 0.251, blue: 0.157),
+            killButton: Color(red: 0.176, green: 0.416, blue: 0.271),
+            statusBadgeText: Color(red: 0.290, green: 0.600, blue: 0.408)
+        ),
+        material: .hudWindow,
+        cornerRadius: 8,
+        usesVibrancy: false,
+        fontDesign: .monospaced,
+        headerFontDesign: .monospaced,
+        dotSize: 8,
+        borderWidth: 0.5
+    )
+
+    static let teletype = MonitorSkin(
+        id: "teletype",
+        name: "Teletype",
+        colors: SkinColors(
+            working: Color(red: 0.659, green: 0.188, blue: 0.125),
+            attention: Color(red: 0.769, green: 0.345, blue: 0.125),
+            done: Color(red: 0.102, green: 0.078, blue: 0.063),
+            starting: Color(red: 0.659, green: 0.620, blue: 0.541),
+            headerText: Color(red: 0.239, green: 0.204, blue: 0.165),
+            headerIcon: Color(red: 0.420, green: 0.373, blue: 0.306),
+            sessionTitle: Color(red: 0.102, green: 0.078, blue: 0.063),
+            sessionTitleStale: Color(red: 0.659, green: 0.620, blue: 0.541),
+            sessionSubtext: Color(red: 0.420, green: 0.373, blue: 0.306),
+            timestamp: Color(red: 0.420, green: 0.373, blue: 0.306),
+            divider: Color(red: 0.847, green: 0.792, blue: 0.659),
+            border: Color(red: 0.239, green: 0.204, blue: 0.165).opacity(0.15),
+            shadow: Color(red: 0.102, green: 0.078, blue: 0.063).opacity(0.18),
+            panelBackground: Color(red: 0.957, green: 0.918, blue: 0.835),
+            permissionBackground: Color(red: 0.659, green: 0.188, blue: 0.125).opacity(0.06),
+            buttonTextColor: Color(red: 0.420, green: 0.373, blue: 0.306),
+            settingsAccent: Color(red: 0.239, green: 0.204, blue: 0.165),
+            accent: Color(red: 0.239, green: 0.204, blue: 0.165),
+            chevron: Color(red: 0.659, green: 0.620, blue: 0.541),
+            killButton: Color(red: 0.659, green: 0.620, blue: 0.541),
+            statusBadgeText: Color(red: 0.239, green: 0.204, blue: 0.165)
+        ),
+        material: .hudWindow,
+        cornerRadius: 6,
+        usesVibrancy: false,
+        fontDesign: .default,
+        headerFontDesign: .serif,
+        dotSize: 7,
+        borderWidth: 0.5
+    )
+
+    static let obsidian = MonitorSkin(
+        id: "obsidian",
+        name: "Obsidian",
+        colors: SkinColors(
+            working: Color(red: 0.3, green: 0.65, blue: 1.0),
+            attention: Color(red: 1.0, green: 0.6, blue: 0.25),
+            done: Color(red: 0.3, green: 0.8, blue: 0.5),
+            starting: Color(red: 0.35, green: 0.35, blue: 0.38),
+            headerText: Color(white: 0.65),
+            headerIcon: Color(white: 0.5),
+            sessionTitle: Color(white: 0.75),
+            sessionTitleStale: Color(white: 0.45),
+            sessionSubtext: Color(white: 0.5),
+            timestamp: Color(white: 0.45),
+            divider: Color(white: 0.0).opacity(0.4),
+            border: .clear,  // depth comes from shadows, not strokes
+            shadow: .black.opacity(0.6),
+            panelBackground: Color(red: 0.11, green: 0.11, blue: 0.12),
+            permissionBackground: Color(red: 1.0, green: 0.6, blue: 0.25).opacity(0.04),
+            buttonTextColor: Color(white: 0.55),
+            settingsAccent: Color(white: 0.65),
+            accent: Color(red: 0.3, green: 0.65, blue: 1.0),
+            chevron: Color(white: 0.4),
+            killButton: Color(white: 0.5),
+            statusBadgeText: Color(white: 0.55)
+        ),
+        material: .hudWindow,
+        cornerRadius: 16,
+        usesVibrancy: false,
+        fontDesign: .default,
+        headerFontDesign: .default,
+        dotSize: 8,
+        borderWidth: 0
+    )
+
+    static let allSkins: [MonitorSkin] = [glass, obsidian, terminal, teletype]
+
+    static func skin(for id: String) -> MonitorSkin {
+        allSkins.first(where: { $0.id == id }) ?? glass
+    }
+}
+
+// MARK: - Skin Environment Key
+
+private struct SkinKey: EnvironmentKey {
+    static let defaultValue: MonitorSkin = .glass
+}
+
+extension EnvironmentValues {
+    var skin: MonitorSkin {
+        get { self[SkinKey.self] }
+        set { self[SkinKey.self] = newValue }
+    }
+}
+
 // MARK: - Config Manager
 
 struct MonitorConfig: Codable {
@@ -10,6 +224,7 @@ struct MonitorConfig: Codable {
     var elevenlabs: ElevenLabsConfig
     var say: SayConfig
     var announce: AnnounceConfig
+    var skin: String?
 
     struct ElevenLabsConfig: Codable {
         var env_file: String
@@ -17,8 +232,6 @@ struct MonitorConfig: Codable {
         var model: String
         var stability: Double
         var similarity_boost: Double
-        var voice_design_prompt: String?
-        var voice_design_name: String?
     }
     struct SayConfig: Codable {
         var voice: String
@@ -38,8 +251,40 @@ struct MonitorConfig: Codable {
         var id: String
         var name: String
     }
+    struct GlassConfig: Codable {
+        var blur: Double       // 0.0–1.0, maps to visual effect alpha
+        var opacity: Double    // 0.0–1.0, dark floor alpha
+        var tintR: Double
+        var tintG: Double
+        var tintB: Double
+        var tintStrength: Double  // 0.0–1.0, tint layer alpha
+    }
     var voices: [SavedVoice]?
     var usage: UsageConfig?
+    var glass: GlassConfig?
+
+    enum CodingKeys: String, CodingKey {
+        case tts_provider
+        case elevenlabs
+        case say
+        case announce
+        case skin
+        case voices
+        case usage
+        case glass
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        tts_provider = try container.decodeIfPresent(String.self, forKey: .tts_provider) ?? "say"
+        elevenlabs = try container.decode(ElevenLabsConfig.self, forKey: .elevenlabs)
+        say = try container.decode(SayConfig.self, forKey: .say)
+        announce = try container.decode(AnnounceConfig.self, forKey: .announce)
+        skin = try container.decodeIfPresent(String.self, forKey: .skin)
+        voices = try container.decodeIfPresent([SavedVoice].self, forKey: .voices)
+        usage = try container.decodeIfPresent(UsageConfig.self, forKey: .usage)
+        glass = try container.decodeIfPresent(GlassConfig.self, forKey: .glass)
+    }
 }
 
 // MARK: - ElevenLabs Voice Info
@@ -119,73 +364,11 @@ class VoiceFetcher: ObservableObject {
         }.resume()
     }
 
-    /// Design a voice from a text prompt, save it, and return the voice_id + name
-    func designVoice(prompt: String, name: String, completion: @escaping (String?, String?) -> Void) {
-        guard let apiKey = apiKey, !apiKey.isEmpty else { completion(nil, nil); return }
-        guard let designURL = URL(string: "https://api.elevenlabs.io/v1/text-to-voice/design") else { completion(nil, nil); return }
-
-        // Step 1: Generate preview
-        var request = URLRequest(url: designURL)
-        request.httpMethod = "POST"
-        request.setValue(apiKey, forHTTPHeaderField: "xi-api-key")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let body: [String: Any] = [
-            "voice_description": prompt,
-            "text": "Hello. A session just finished — your project is done and ready for review. Another session needs your attention, it looks like there is a permission prompt waiting. Everything else is still running smoothly.",
-            "model_id": "eleven_multilingual_ttv_v2",
-            "guidance_scale": 8,
-            "quality": 0.9
-        ]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            guard let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let previews = json["previews"] as? [[String: Any]],
-                  let first = previews.first,
-                  let generatedId = first["generated_voice_id"] as? String else {
-                completion(nil, nil)
-                return
-            }
-
-            // Step 2: Save as permanent voice
-            self?.saveDesignedVoice(generatedId: generatedId, name: name, prompt: prompt, completion: completion)
-        }.resume()
-    }
-
-    private func saveDesignedVoice(generatedId: String, name: String, prompt: String, completion: @escaping (String?, String?) -> Void) {
-        guard let apiKey = apiKey, !apiKey.isEmpty else { completion(nil, nil); return }
-        guard let url = URL(string: "https://api.elevenlabs.io/v1/text-to-voice") else { completion(nil, nil); return }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue(apiKey, forHTTPHeaderField: "xi-api-key")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let body: [String: Any] = [
-            "voice_name": name,
-            "voice_description": prompt,
-            "generated_voice_id": generatedId,
-            "labels": ["source": "claude-monitor"]
-        ]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
-        URLSession.shared.dataTask(with: request) { data, _, _ in
-            guard let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let voiceId = json["voice_id"] as? String else {
-                completion(nil, nil)
-                return
-            }
-            let voiceName = json["name"] as? String ?? name
-            completion(voiceId, voiceName)
-        }.resume()
-    }
 }
 
 class ConfigManager: ObservableObject {
     @Published var config: MonitorConfig?
+    @Published var currentSkin: MonitorSkin = .glass
     let voiceFetcher = VoiceFetcher()
 
     static let configPath: String = {
@@ -206,6 +389,32 @@ class ConfigManager: ObservableObject {
         guard let data = FileManager.default.contents(atPath: Self.configPath),
               let decoded = try? JSONDecoder().decode(MonitorConfig.self, from: data) else { return }
         self.config = decoded
+        self.currentSkin = MonitorSkin.skin(for: decoded.skin ?? "glass")
+    }
+
+    func setSkin(_ skinId: String) {
+        config?.skin = skinId
+        currentSkin = MonitorSkin.skin(for: skinId)
+        save()
+        objectWillChange.send()
+    }
+
+    var skinId: String {
+        config?.skin ?? "glass"
+    }
+
+    var ttsProvider: String {
+        config?.tts_provider ?? "say"
+    }
+
+    func setTTSProvider(_ provider: String) {
+        config?.tts_provider = provider
+        save()
+        objectWillChange.send()
+    }
+
+    var usesElevenLabsTTS: Bool {
+        ttsProvider == "cache" || ttsProvider == "elevenlabs"
     }
 
     func setVoice(_ voiceId: String) {
@@ -225,7 +434,7 @@ class ConfigManager: ObservableObject {
 
     func toggleUsage() {
         if config?.usage == nil {
-            config?.usage = MonitorConfig.UsageConfig(enabled: false)
+            config?.usage = MonitorConfig.UsageConfig(enabled: true)
         } else {
             config?.usage?.enabled.toggle()
         }
@@ -234,7 +443,7 @@ class ConfigManager: ObservableObject {
     }
 
     var usageEnabled: Bool {
-        config?.usage?.enabled ?? true
+        config?.usage?.enabled ?? false
     }
 
     func save() {
@@ -242,7 +451,9 @@ class ConfigManager: ObservableObject {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         guard let data = try? encoder.encode(config) else { return }
-        try? data.write(to: URL(fileURLWithPath: Self.configPath))
+        let tmpUrl = URL(fileURLWithPath: Self.configPath + ".tmp")
+        try? data.write(to: tmpUrl)
+        _ = try? FileManager.default.replaceItemAt(URL(fileURLWithPath: Self.configPath), withItemAt: tmpUrl)
     }
 
     var currentVoiceId: String {
@@ -280,6 +491,22 @@ class ConfigManager: ObservableObject {
             config?.voices = voices
             save()
         }
+    }
+
+    // MARK: - Glass tuning
+
+    static let defaultGlass = MonitorConfig.GlassConfig(
+        blur: 1.0, opacity: 0.5, tintR: 0.5, tintG: 0.5, tintB: 0.5, tintStrength: 0.0
+    )
+
+    var glassConfig: MonitorConfig.GlassConfig {
+        config?.glass ?? Self.defaultGlass
+    }
+
+    func setGlass(_ glass: MonitorConfig.GlassConfig) {
+        config?.glass = glass
+        save()
+        objectWillChange.send()
     }
 }
 
@@ -527,8 +754,9 @@ class UsageFetcher: ObservableObject {
 
 // MARK: - Session Model
 
-struct SessionInfo: Codable, Identifiable {
+struct SessionInfo: Codable, Identifiable, Equatable {
     let session_id: String
+    var agent: String
     var status: String
     var project: String
     var cwd: String
@@ -537,16 +765,40 @@ struct SessionInfo: Codable, Identifiable {
     var started_at: String
     var updated_at: String
     var last_prompt: String
+    var thread_id: String
+    let startedAtDate: Date?
+    let updatedAtDate: Date?
+
+    private static let iso8601Fractional: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+
+    private static let iso8601Plain: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter
+    }()
 
     var id: String { session_id }
 
     enum CodingKeys: String, CodingKey {
-        case session_id, status, project, cwd, terminal, terminal_session_id, started_at, updated_at, last_prompt
+        case session_id, agent, status, project, cwd, terminal, terminal_session_id, started_at, updated_at, last_prompt, thread_id
+    }
+
+    private static func normalizeAgent(_ value: String) -> String {
+        value.lowercased() == "codex" ? "codex" : "claude"
+    }
+
+    private static func parseISO8601(_ value: String) -> Date? {
+        iso8601Fractional.date(from: value) ?? iso8601Plain.date(from: value)
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         session_id = try c.decode(String.self, forKey: .session_id)
+        agent = Self.normalizeAgent((try? c.decode(String.self, forKey: .agent)) ?? "claude")
         status = (try? c.decode(String.self, forKey: .status)) ?? "unknown"
         project = (try? c.decode(String.self, forKey: .project)) ?? "unknown"
         cwd = (try? c.decode(String.self, forKey: .cwd)) ?? ""
@@ -555,16 +807,28 @@ struct SessionInfo: Codable, Identifiable {
         started_at = (try? c.decode(String.self, forKey: .started_at)) ?? ""
         updated_at = (try? c.decode(String.self, forKey: .updated_at)) ?? ""
         last_prompt = (try? c.decode(String.self, forKey: .last_prompt)) ?? ""
+        thread_id = (try? c.decode(String.self, forKey: .thread_id)) ?? ""
+        startedAtDate = Self.parseISO8601(started_at)
+        updatedAtDate = Self.parseISO8601(updated_at)
     }
 
-    var statusColor: Color {
-        switch status {
-        case "starting":  return .gray
-        case "working":   return .cyan
-        case "done":      return .green
-        case "attention": return .orange
-        default:          return .gray
-        }
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(session_id, forKey: .session_id)
+        try c.encode(agent, forKey: .agent)
+        try c.encode(status, forKey: .status)
+        try c.encode(project, forKey: .project)
+        try c.encode(cwd, forKey: .cwd)
+        try c.encode(terminal, forKey: .terminal)
+        try c.encode(terminal_session_id, forKey: .terminal_session_id)
+        try c.encode(started_at, forKey: .started_at)
+        try c.encode(updated_at, forKey: .updated_at)
+        try c.encode(last_prompt, forKey: .last_prompt)
+        try c.encode(thread_id, forKey: .thread_id)
+    }
+
+    func statusColor(for skin: MonitorSkin) -> Color {
+        skin.colors.statusColor(for: status)
     }
 
     var statusIcon: String {
@@ -577,16 +841,12 @@ struct SessionInfo: Codable, Identifiable {
         }
     }
 
+    var displayAgent: String {
+        agent == "codex" ? "Codex" : "Claude"
+    }
+
     var elapsedString: String {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        // Try with fractional seconds first, then without
-        var date = formatter.date(from: started_at)
-        if date == nil {
-            formatter.formatOptions = [.withInternetDateTime]
-            date = formatter.date(from: started_at)
-        }
-        guard let start = date else { return "" }
+        guard let start = startedAtDate else { return "" }
         let elapsed = Date().timeIntervalSince(start)
         if elapsed < 60 { return "\(Int(elapsed))s" }
         if elapsed < 3600 { return "\(Int(elapsed / 60))m" }
@@ -594,21 +854,14 @@ struct SessionInfo: Codable, Identifiable {
     }
 
     var isStale: Bool {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        var date = formatter.date(from: updated_at)
-        if date == nil {
-            formatter.formatOptions = [.withInternetDateTime]
-            date = formatter.date(from: updated_at)
-        }
-        guard let updated = date else { return false }
+        guard let updated = updatedAtDate else { return false }
         return Date().timeIntervalSince(updated) > 600 // 10 minutes
     }
 }
 
 // MARK: - Permission Model
 
-struct PermissionInfo: Codable {
+struct PermissionInfo: Codable, Equatable {
     let tool_name: String
     let display: String
     let tool_input: String
@@ -632,7 +885,7 @@ struct PermissionInfo: Codable {
 
 class PermissionSocketServer {
     static let shared = PermissionSocketServer()
-    private let socketPath = "/tmp/claude-monitor.sock"
+    private let socketPath = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude/monitor/monitor.sock").path
     private var serverFd: Int32 = -1
     private let queue = DispatchQueue(label: "monitor.socket", qos: .userInteractive)
     // Map session_id -> client file descriptor (kept open, waiting for response)
@@ -668,6 +921,9 @@ class PermissionSocketServer {
             Darwin.close(serverFd)
             return
         }
+
+        // Restrict socket to owner only
+        chmod(socketPath, 0o600)
 
         guard listen(serverFd, 5) == 0 else {
             NSLog("[ClaudeMonitor] Socket: listen failed")
@@ -740,8 +996,8 @@ class PermissionSocketServer {
         }
         lock.unlock()
 
-        let response = "{\"decision\":\"\(decision)\"}"
-        let bytes = Array(response.utf8)
+        let responseData = try? JSONSerialization.data(withJSONObject: ["decision": decision])
+        let bytes = responseData.map { Array($0) } ?? Array("{\"decision\":\"deny\"}".utf8)
         bytes.withUnsafeBufferPointer { ptr in
             _ = write(fd, ptr.baseAddress!, ptr.count)
         }
@@ -764,6 +1020,37 @@ class PermissionSocketServer {
     }
 }
 
+/// Find the current WezTerm Unix socket. The monitor process may have been
+/// launched with one socket that is now stale (WezTerm restarted), so we
+/// resolve the newest gui-sock-* file at call time.
+func currentWezTermSocket() -> String? {
+    let dir = FileManager.default.homeDirectoryForCurrentUser.path + "/.local/share/wezterm"
+    guard let entries = try? FileManager.default.contentsOfDirectory(atPath: dir) else { return nil }
+    var newest: (path: String, mtime: Date)?
+    for entry in entries where entry.hasPrefix("gui-sock-") {
+        let full = "\(dir)/\(entry)"
+        if let attrs = try? FileManager.default.attributesOfItem(atPath: full),
+           let mtime = attrs[.modificationDate] as? Date {
+            if newest == nil || mtime > newest!.mtime { newest = (full, mtime) }
+        }
+    }
+    return newest?.path
+}
+
+/// Create a Process configured to run `wezterm cli` with the current socket.
+func wezTermCLIProcess(arguments: [String]) -> Process {
+    let task = Process()
+    task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+    task.arguments = ["wezterm", "cli"] + arguments
+    task.standardError = FileHandle.nullDevice
+    // Override WEZTERM_UNIX_SOCKET so we connect to the live WezTerm instance,
+    // not whatever socket was in effect when the monitor was launched.
+    var env = ProcessInfo.processInfo.environment
+    if let sock = currentWezTermSocket() { env["WEZTERM_UNIX_SOCKET"] = sock }
+    task.environment = env
+    return task
+}
+
 // MARK: - Session Reader (polls directory)
 
 class SessionReader: ObservableObject {
@@ -771,20 +1058,75 @@ class SessionReader: ObservableObject {
     @Published var permissions: [String: PermissionInfo] = [:]
     private var timer: Timer?
     private var livenessTimer: Timer?
+    private var discoveryTimer: Timer?
+    private var codexSyncTimer: Timer?
+    private var isPruning = false
+    private let scanQueue = DispatchQueue(label: "monitor.sessions.scan", qos: .utility)
+    private var sessionsDirFD: CInt = -1
+    private var sessionsWatcher: DispatchSourceFileSystemObject?
+    private var codexLogPathsByThreadID: [String: String] = [:]
 
     let sessionsDir: String = {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         return "\(home)/.claude/monitor/sessions"
     }()
 
+    let codexSessionsDir: String = {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        return "\(home)/.codex/sessions"
+    }()
+
     init() {
+        ensureSessionsDirExists()
         readSessions()
-        timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+        discoverSessions() // One-time startup pass to find sessions hooks missed
+        syncCodexSessionsFromLogs()
+        startWatchingSessionsDir()
+        timer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
             self?.readSessions()
         }
-        livenessTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
-            self?.pruneDeadSessions()
+        livenessTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+            guard let self = self, !self.isPruning else { return }
+            self.pruneDeadSessions()
         }
+        // Re-discover sessions periodically to catch any that hooks missed
+        discoveryTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
+            self?.discoverSessions()
+        }
+        codexSyncTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+            self?.syncCodexSessionsFromLogs()
+        }
+    }
+
+    deinit {
+        timer?.invalidate()
+        livenessTimer?.invalidate()
+        discoveryTimer?.invalidate()
+        codexSyncTimer?.invalidate()
+        sessionsWatcher?.cancel()
+    }
+
+    private func ensureSessionsDirExists() {
+        try? FileManager.default.createDirectory(atPath: sessionsDir, withIntermediateDirectories: true)
+    }
+
+    private func startWatchingSessionsDir() {
+        ensureSessionsDirExists()
+        sessionsDirFD = open(sessionsDir, O_EVTONLY)
+        guard sessionsDirFD >= 0 else { return }
+
+        sessionsWatcher = DispatchSource.makeFileSystemObjectSource(
+            fileDescriptor: sessionsDirFD,
+            eventMask: [.write, .delete, .extend, .rename],
+            queue: scanQueue
+        )
+        sessionsWatcher?.setEventHandler { [weak self] in
+            self?.readSessions()
+        }
+        sessionsWatcher?.setCancelHandler { [fd = sessionsDirFD] in
+            if fd >= 0 { Darwin.close(fd) }
+        }
+        sessionsWatcher?.resume()
     }
 
     func respondToPermission(sessionId: String, decision: String) {
@@ -809,15 +1151,36 @@ class SessionReader: ObservableObject {
 
         // Build map: ttyName -> [session_id]
         var ttyMap: [String: [String]] = [:]
+        var wezPaneMap: [String: [String]] = [:]  // paneId -> [session_id]
+        var itermMap: [String: [String]] = [:]    // iTerm2 unique id -> [session_id]
         for session in currentSessions {
             guard !session.terminal_session_id.isEmpty else { continue }
             if session.terminal == "terminal" {
                 let ttyName = session.terminal_session_id.replacingOccurrences(of: "/dev/", with: "")
+                // Sanitize: TTY names are alphanumeric (e.g., "ttys017")
+                guard ttyName == ttyName.filter({ $0.isLetter || $0.isNumber }) else { continue }
                 ttyMap[ttyName, default: []].append(session.session_id)
+            } else if session.terminal == "wezterm" {
+                // Sanitize: pane IDs are numeric
+                guard session.terminal_session_id == session.terminal_session_id.filter({ $0.isNumber }) else { continue }
+                wezPaneMap[session.terminal_session_id, default: []].append(session.session_id)
+            } else if session.terminal == "iterm2" {
+                let uniqueId: String
+                if let suffix = session.terminal_session_id.split(separator: ":", maxSplits: 1).last,
+                   session.terminal_session_id.contains(":") {
+                    uniqueId = String(suffix)
+                } else {
+                    uniqueId = session.terminal_session_id
+                }
+                guard !uniqueId.isEmpty else { continue }
+                // Sanitize: iTerm2 unique IDs are UUIDs (hex + dashes)
+                guard uniqueId == uniqueId.filter({ $0.isHexDigit || $0 == "-" }) else { continue }
+                itermMap[uniqueId, default: []].append(session.session_id)
             }
         }
-        guard !ttyMap.isEmpty else { return }
+        guard !ttyMap.isEmpty || !wezPaneMap.isEmpty || !itermMap.isEmpty else { return }
 
+        isPruning = true
         DispatchQueue.global(qos: .utility).async { [weak self] in
             guard let self = self else { return }
 
@@ -834,8 +1197,8 @@ class SessionReader: ObservableObject {
 
             do {
                 try task.run()
-                task.waitUntilExit()
                 let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                task.waitUntilExit()
                 let output = String(data: data, encoding: .utf8) ?? ""
                 let deadTTYs = Set(output.split(separator: "\n").map(String.init))
 
@@ -851,13 +1214,99 @@ class SessionReader: ObservableObject {
                     }
                 }
             } catch {}
+
+            // Prune dead WezTerm panes
+            if !wezPaneMap.isEmpty {
+                let wezTask = wezTermCLIProcess(arguments: ["list", "--format", "json"])
+                let wezPipe = Pipe()
+                wezTask.standardOutput = wezPipe
+                do {
+                    try wezTask.run()
+                    let wezData = wezPipe.fileHandleForReading.readDataToEndOfFile()
+                    wezTask.waitUntilExit()
+                    var livePanes = Set<String>()
+                    if let panes = try? JSONSerialization.jsonObject(with: wezData) as? [[String: Any]] {
+                        for pane in panes {
+                            if let paneId = pane["pane_id"] as? Int {
+                                livePanes.insert(String(paneId))
+                            }
+                        }
+                    }
+                    for (paneId, sids) in wezPaneMap {
+                        if !livePanes.contains(paneId) {
+                            for sid in sids {
+                                let path = "\(self.sessionsDir)/\(sid).json"
+                                try? FileManager.default.removeItem(atPath: path)
+                                try? FileManager.default.removeItem(atPath: "\(self.sessionsDir)/\(sid).permission")
+                                NSLog("[ClaudeMonitor] Pruned session %@ — WezTerm pane %@ gone", sid, paneId)
+                            }
+                        }
+                    }
+                } catch {}
+            }
+
+            // Prune dead iTerm2 sessions
+            if !itermMap.isEmpty {
+                var liveItermIds = Set<String>()
+                if NSRunningApplication.runningApplications(withBundleIdentifier: "com.googlecode.iterm2").first != nil {
+                    let script = """
+                    tell application "iTerm2"
+                        set output to ""
+                        repeat with w in windows
+                            repeat with t in tabs of w
+                                repeat with s in sessions of t
+                                    set output to output & (unique id of s) & linefeed
+                                end repeat
+                            end repeat
+                        end repeat
+                        return output
+                    end tell
+                    """
+                    if let appleScript = NSAppleScript(source: script) {
+                        var error: NSDictionary?
+                        let result = appleScript.executeAndReturnError(&error)
+                        if let output = result.stringValue {
+                            for line in output.split(separator: "\n") {
+                                let uniqueId = String(line).trimmingCharacters(in: .whitespacesAndNewlines)
+                                guard !uniqueId.isEmpty else { continue }
+                                liveItermIds.insert(uniqueId)
+                            }
+                        }
+                    }
+                }
+
+                for (uniqueId, sids) in itermMap {
+                    if !liveItermIds.contains(uniqueId) {
+                        for sid in sids {
+                            let path = "\(self.sessionsDir)/\(sid).json"
+                            try? FileManager.default.removeItem(atPath: path)
+                            try? FileManager.default.removeItem(atPath: "\(self.sessionsDir)/\(sid).permission")
+                            NSLog("[ClaudeMonitor] Pruned session %@ — iTerm2 session %@ gone", sid, uniqueId)
+                        }
+                    }
+                }
+            }
+
+            DispatchQueue.main.async {
+                self.isPruning = false
+            }
         }
     }
 
     func readSessions() {
+        scanQueue.async { [weak self] in
+            self?.readSessionsOnScanQueue()
+        }
+    }
+
+    private func readSessionsOnScanQueue() {
         let fm = FileManager.default
         guard let files = try? fm.contentsOfDirectory(atPath: sessionsDir) else {
-            DispatchQueue.main.async { self.sessions = []; self.permissions = [:] }
+            DispatchQueue.main.async {
+                guard !self.sessions.isEmpty || !self.permissions.isEmpty else { return }
+                self.sessions = []
+                self.permissions = [:]
+            }
             return
         }
 
@@ -888,60 +1337,680 @@ class SessionReader: ObservableObject {
         let order: [String: Int] = ["attention": 0, "working": 1, "starting": 2, "done": 3]
         loaded.sort { (order[$0.status] ?? 9) < (order[$1.status] ?? 9) }
 
+        let activeSessionIds = Set(loaded.map(\.session_id))
+        loadedPerms = loadedPerms.filter { activeSessionIds.contains($0.key) }
+
+        for orphanId in files
+            .filter({ $0.hasSuffix(".permission") })
+            .map({ String($0.dropLast(".permission".count)) })
+            .filter({ !activeSessionIds.contains($0) }) {
+            try? fm.removeItem(atPath: "\(sessionsDir)/\(orphanId).permission")
+        }
+
         DispatchQueue.main.async {
+            guard loaded != self.sessions || loadedPerms != self.permissions else { return }
             self.sessions = loaded
             self.permissions = loadedPerms
         }
     }
 
+    private struct CodexLogSnapshot {
+        let status: String
+        let updatedAt: String
+        let lastPrompt: String
+    }
+
+    func syncCodexSessionsFromLogs() {
+        scanQueue.async { [weak self] in
+            self?.syncCodexSessionsFromLogsOnScanQueue()
+        }
+    }
+
+    private func syncCodexSessionsFromLogsOnScanQueue() {
+        let codexSessions = DispatchQueue.main.sync {
+            self.sessions.filter { $0.agent == "codex" && !$0.thread_id.isEmpty }
+        }
+        guard !codexSessions.isEmpty else { return }
+
+        var didUpdate = false
+        for session in codexSessions {
+            guard let logPath = codexLogPath(for: session.thread_id),
+                  let snapshot = readCodexLogSnapshot(at: logPath) else { continue }
+
+            let needsStatusUpdate = session.status != snapshot.status
+            let needsPromptUpdate = !snapshot.lastPrompt.isEmpty && session.last_prompt != snapshot.lastPrompt
+            let needsTimestampUpdate = !snapshot.updatedAt.isEmpty && session.updated_at != snapshot.updatedAt
+            guard needsStatusUpdate || needsPromptUpdate || needsTimestampUpdate else { continue }
+
+            let sessionPath = "\(sessionsDir)/\(session.session_id).json"
+            let fileURL = URL(fileURLWithPath: sessionPath)
+            guard let data = try? Data(contentsOf: fileURL),
+                  var json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { continue }
+
+            json["status"] = snapshot.status
+            json["agent"] = "codex"
+            json["thread_id"] = session.thread_id
+            if !snapshot.updatedAt.isEmpty {
+                json["updated_at"] = snapshot.updatedAt
+            }
+            if !snapshot.lastPrompt.isEmpty {
+                json["last_prompt"] = snapshot.lastPrompt
+            }
+
+            guard let encoded = try? JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted, .sortedKeys]) else { continue }
+            let tmpURL = fileURL.appendingPathExtension("tmp")
+            do {
+                try encoded.write(to: tmpURL)
+                if FileManager.default.fileExists(atPath: fileURL.path) {
+                    _ = try FileManager.default.replaceItemAt(fileURL, withItemAt: tmpURL)
+                } else {
+                    try FileManager.default.moveItem(at: tmpURL, to: fileURL)
+                }
+                didUpdate = true
+            } catch {
+                try? FileManager.default.removeItem(at: tmpURL)
+            }
+        }
+
+        if didUpdate {
+            readSessionsOnScanQueue()
+        }
+    }
+
+    private func codexLogPath(for threadID: String) -> String? {
+        if let cached = codexLogPathsByThreadID[threadID],
+           FileManager.default.fileExists(atPath: cached) {
+            return cached
+        }
+
+        let fm = FileManager.default
+        guard let enumerator = fm.enumerator(atPath: codexSessionsDir) else { return nil }
+        let suffix = "\(threadID).jsonl"
+        while let relativePath = enumerator.nextObject() as? String {
+            guard relativePath.hasSuffix(suffix) else { continue }
+            let absolutePath = "\(codexSessionsDir)/\(relativePath)"
+            codexLogPathsByThreadID[threadID] = absolutePath
+            return absolutePath
+        }
+
+        return nil
+    }
+
+    private func readCodexLogSnapshot(at path: String) -> CodexLogSnapshot? {
+        guard let data = FileManager.default.contents(atPath: path),
+              let content = String(data: data, encoding: .utf8) else { return nil }
+
+        var status = "working"
+        var updatedAt = ""
+        var lastPrompt = ""
+
+        for line in content.split(separator: "\n") {
+            guard let lineData = line.data(using: .utf8),
+                  let root = (try? JSONSerialization.jsonObject(with: lineData)) as? [String: Any],
+                  let payload = root["payload"] as? [String: Any],
+                  let type = payload["type"] as? String else { continue }
+
+            let timestamp = (root["timestamp"] as? String) ?? updatedAt
+            switch type {
+            case "user_message":
+                if let message = payload["message"] as? String {
+                    lastPrompt = String(message.prefix(200))
+                }
+            case "task_started":
+                status = "working"
+                updatedAt = timestamp
+            case "task_complete":
+                status = "done"
+                updatedAt = timestamp
+            default:
+                continue
+            }
+        }
+
+        guard !updatedAt.isEmpty else { return nil }
+        return CodexLogSnapshot(status: status, updatedAt: updatedAt, lastPrompt: lastPrompt)
+    }
+
+    private func unambiguousCodexLogPath(in paths: [String]) -> String? {
+        let uniquePaths = Array(Set(paths)).sorted()
+        guard uniquePaths.count == 1 else { return nil }
+        return uniquePaths[0]
+    }
+
+    private func codexThreadID(fromLogPath path: String) -> String? {
+        guard let chunk = FileManager.default.contents(atPath: path),
+              let firstLine = String(data: chunk, encoding: .utf8)?.split(separator: "\n").first,
+              let data = String(firstLine).data(using: .utf8),
+              let root = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+              root["type"] as? String == "session_meta",
+              let payload = root["payload"] as? [String: Any],
+              let threadID = payload["id"] as? String,
+              !threadID.isEmpty else { return nil }
+        return threadID
+    }
+
+    /// Discover running Claude and Codex sessions that hooks/wrappers missed.
+    /// Builds a TTY→terminal map from WezTerm/iTerm2, finds supported agents via ps, resolves cwd via lsof,
+    /// and creates session files for any that aren't already tracked. Skips cwd=/ (launcher process artifact).
     func discoverSessions() {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/bin/sh")
-        task.arguments = ["-c", """
-        SESSIONS_DIR="$HOME/.claude/monitor/sessions"
-        NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-        for pid in $(ps -eo pid=,comm= | awk '/claude/ && !/claude_monitor/ && !/awk/ {print $1}'); do
-            tty_name=$(ps -o tty= -p "$pid" 2>/dev/null | tr -d ' ')
-            [ -z "$tty_name" ] || [ "$tty_name" = "??" ] && continue
-            grep -rlq "/dev/$tty_name" "$SESSIONS_DIR" 2>/dev/null && continue
-            cwd=$(lsof -p "$pid" -d cwd -Fn 2>/dev/null | tail -1 | cut -c2-)
-            [ -z "$cwd" ] && continue
-            project=$(basename "$cwd")
-            sid="discovered-${tty_name}"
-            jq -n --arg sid "$sid" --arg project "$project" --arg cwd "$cwd" --arg term_sid "/dev/$tty_name" --arg now "$NOW" '{session_id:$sid,status:"working",project:$project,cwd:$cwd,terminal:"terminal",terminal_session_id:$term_sid,started_at:$now,updated_at:$now,last_prompt:""}' > "$SESSIONS_DIR/$sid.json.tmp" && mv "$SESSIONS_DIR/$sid.json.tmp" "$SESSIONS_DIR/$sid.json"
-        done
-        """]
-        try? task.run()
-        task.waitUntilExit()
-        readSessions()
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self = self else { return }
+            let fm = FileManager.default
+            let now = ISO8601DateFormatter().string(from: Date())
+
+            // --- Step 1: Build TTY → terminal info map ---
+            // Maps "/dev/ttysNNN" → (terminalType, terminalSessionId)
+            var ttyTerminalMap: [String: (String, String)] = [:]
+
+            // WezTerm: pane_id + tty_name
+            let wezTask = wezTermCLIProcess(arguments: ["list", "--format", "json"])
+            let wezPipe = Pipe()
+            wezTask.standardOutput = wezPipe
+            if let _ = try? wezTask.run() {
+                let wezData = wezPipe.fileHandleForReading.readDataToEndOfFile()
+                wezTask.waitUntilExit()
+                if let panes = try? JSONSerialization.jsonObject(with: wezData) as? [[String: Any]] {
+                    for pane in panes {
+                        if let paneId = pane["pane_id"] as? Int,
+                           let ttyName = pane["tty_name"] as? String, !ttyName.isEmpty {
+                            ttyTerminalMap[ttyName] = ("wezterm", String(paneId))
+                        }
+                    }
+                }
+            }
+
+            // iTerm2: check for running app, get session IDs via AppleScript
+            if NSRunningApplication.runningApplications(withBundleIdentifier: "com.googlecode.iterm2").first != nil {
+                let script = """
+                tell application "iTerm2"
+                    set output to ""
+                    repeat with w in windows
+                        repeat with t in tabs of w
+                            repeat with s in sessions of t
+                                set output to output & (tty of s) & "|" & (unique id of s) & linefeed
+                            end repeat
+                        end repeat
+                    end repeat
+                    return output
+                end tell
+                """
+                if let appleScript = NSAppleScript(source: script) {
+                    var error: NSDictionary?
+                    let result = appleScript.executeAndReturnError(&error)
+                    if let output = result.stringValue {
+                        for line in output.split(separator: "\n") {
+                            let parts = line.split(separator: "|", maxSplits: 1)
+                            if parts.count == 2 {
+                                let tty = String(parts[0])
+                                let sessionId = String(parts[1])
+                                // Don't overwrite WezTerm entries (unlikely overlap, but just in case)
+                                if ttyTerminalMap[tty] == nil {
+                                    ttyTerminalMap[tty] = ("iterm2", sessionId)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // --- Step 2: Collect already-tracked terminal session IDs ---
+            var trackedTTYs = Set<String>()         // "/dev/ttysNNN" for Terminal.app
+            var trackedWezPanes = Set<String>()      // pane IDs for WezTerm
+            var trackedItermIds = Set<String>()       // "w0t0p0:GUID" for iTerm2
+            let currentSessions = DispatchQueue.main.sync { self.sessions }
+            for session in currentSessions {
+                guard !session.terminal_session_id.isEmpty else { continue }
+                switch session.terminal {
+                case "wezterm":  trackedWezPanes.insert(session.terminal_session_id)
+                case "iterm2":   trackedItermIds.insert(session.terminal_session_id)
+                case "terminal": trackedTTYs.insert(session.terminal_session_id)
+                default: break
+                }
+            }
+
+            // --- Step 3: Find supported agent processes with TTYs ---
+            // Use comm= so each row has a stable executable name/path without argv noise.
+            let psTask = Process()
+            let psPipe = Pipe()
+            psTask.executableURL = URL(fileURLWithPath: "/bin/sh")
+            psTask.arguments = ["-c", "ps -eo pid=,tty=,comm= | awk '($3 == \"claude\" || $3 == \"codex\" || $3 ~ /\\/codex$/) && $3 !~ /claude_monitor$/ {print $1 \"\\t\" $2 \"\\t\" $3}'"]
+            psTask.standardOutput = psPipe
+            psTask.standardError = FileHandle.nullDevice
+            guard let _ = try? psTask.run() else { return }
+            let psData = psPipe.fileHandleForReading.readDataToEndOfFile()
+            psTask.waitUntilExit()
+            let psOutput = String(data: psData, encoding: .utf8) ?? ""
+
+            struct CandidateProcess {
+                let pid: String
+                let tty: String // "/dev/ttysNNN"
+                let agent: String
+            }
+
+            var candidates: [CandidateProcess] = []
+            var seenTTYs = Set<String>() // only take one tracked agent process per TTY
+
+            for line in psOutput.split(separator: "\n") {
+                let parts = line.split(separator: "\t")
+                guard parts.count >= 3 else { continue }
+                let pid = String(parts[0]).trimmingCharacters(in: .whitespaces)
+                let ttyShort = String(parts[1]).trimmingCharacters(in: .whitespaces)
+                let comm = String(parts[2]).trimmingCharacters(in: .whitespaces)
+
+                let agent: String
+                if comm == "claude" {
+                    agent = "claude"
+                } else if comm == "codex" || comm.hasSuffix("/codex") {
+                    agent = "codex"
+                } else {
+                    continue
+                }
+                guard ttyShort != "??" && !ttyShort.isEmpty else { continue }
+
+                let ttyPath = "/dev/\(ttyShort)"
+                guard !seenTTYs.contains(ttyPath) else { continue }
+                seenTTYs.insert(ttyPath)
+                candidates.append(CandidateProcess(pid: pid, tty: ttyPath, agent: agent))
+            }
+
+            guard !candidates.isEmpty else { return }
+
+            // --- Step 4: Filter candidates by already-tracked status ---
+            struct DiscoveryCandidate {
+                let pid: String
+                let tty: String
+                let agent: String
+                let terminalType: String
+                let terminalSessionId: String
+            }
+
+            var filteredCandidates: [DiscoveryCandidate] = []
+            for candidate in candidates {
+                let terminalType: String
+                let terminalSessionId: String
+                if let (tType, tSid) = ttyTerminalMap[candidate.tty] {
+                    terminalType = tType
+                    terminalSessionId = tSid
+                } else {
+                    terminalType = "terminal"
+                    terminalSessionId = candidate.tty
+                }
+
+                // Check if already tracked
+                var isTracked = false
+                switch terminalType {
+                case "wezterm":
+                    isTracked = trackedWezPanes.contains(terminalSessionId)
+                case "iterm2":
+                    let discoveredId = terminalSessionId
+                    isTracked = trackedItermIds.contains(where: { $0.hasSuffix(discoveredId) || $0 == discoveredId })
+                case "terminal":
+                    isTracked = trackedTTYs.contains(terminalSessionId)
+                default: break
+                }
+                if !isTracked {
+                    filteredCandidates.append(DiscoveryCandidate(pid: candidate.pid, tty: candidate.tty, agent: candidate.agent, terminalType: terminalType, terminalSessionId: terminalSessionId))
+                }
+            }
+
+            guard !filteredCandidates.isEmpty else { return }
+
+            // --- Step 5: Batch-resolve cwds and Codex session logs via single lsof call ---
+            let pidList = filteredCandidates.map { $0.pid }.joined(separator: ",")
+            let lsofTask = Process()
+            let lsofPipe = Pipe()
+            lsofTask.executableURL = URL(fileURLWithPath: "/usr/sbin/lsof")
+            lsofTask.arguments = ["-p", pidList, "-Fnf"]
+            lsofTask.standardOutput = lsofPipe
+            lsofTask.standardError = FileHandle.nullDevice
+            guard let _ = try? lsofTask.run() else { return }
+            let lsofData = lsofPipe.fileHandleForReading.readDataToEndOfFile()
+            lsofTask.waitUntilExit()
+            let lsofOutput = String(data: lsofData, encoding: .utf8) ?? ""
+
+            // Parse multi-process lsof output: "p<PID>\nf<fd>\nn<path>\np<PID>\n..."
+            var pidToCwd: [String: String] = [:]
+            var pidToCodexLogPaths: [String: [String]] = [:]
+            var currentPid: String?
+            var currentFD: String?
+            for line in lsofOutput.split(separator: "\n") {
+                if line.hasPrefix("p") {
+                    currentPid = String(line.dropFirst())
+                    currentFD = nil
+                } else if line.hasPrefix("f") {
+                    currentFD = String(line.dropFirst())
+                } else if line.hasPrefix("n"), let pid = currentPid {
+                    let path = String(line.dropFirst())
+                    if currentFD == "cwd" {
+                        pidToCwd[pid] = path
+                    } else if path.contains("/.codex/sessions/"), path.hasSuffix(".jsonl") {
+                        pidToCodexLogPaths[pid, default: []].append(path)
+                    }
+                }
+            }
+
+            // --- Step 6: Create session files for untracked sessions ---
+            var created = 0
+            for candidate in filteredCandidates {
+                let cwd = pidToCwd[candidate.pid] ?? ""
+
+                // Skip cwd=/ (launcher process artifact) and empty
+                guard !cwd.isEmpty && cwd != "/" else { continue }
+
+                let project = (cwd as NSString).lastPathComponent
+                let sid = "discovered-\(candidate.agent)-\(candidate.pid)"
+                let codexLogPath = candidate.agent == "codex" ? self.unambiguousCodexLogPath(in: pidToCodexLogPaths[candidate.pid] ?? []) : nil
+                let threadID = codexLogPath.flatMap { self.codexThreadID(fromLogPath: $0) } ?? ""
+
+                // Sanitize for file path safety
+                let safeSid = sid.filter { $0.isLetter || $0.isNumber || $0 == "-" }
+                guard safeSid == sid else { continue }
+
+                // Create session file atomically
+                let sessionData: [String: Any] = [
+                    "session_id": sid,
+                    "agent": candidate.agent,
+                    "status": "working",
+                    "project": project,
+                    "cwd": cwd,
+                    "terminal": candidate.terminalType,
+                    "terminal_session_id": candidate.terminalSessionId,
+                    "started_at": now,
+                    "updated_at": now,
+                    "last_prompt": "",
+                    "thread_id": threadID
+                ]
+
+                guard let jsonData = try? JSONSerialization.data(withJSONObject: sessionData, options: [.prettyPrinted, .sortedKeys]) else { continue }
+                let sessionFile = "\(self.sessionsDir)/\(safeSid).json"
+                    let tmpFile = sessionFile + ".tmp"
+                do {
+                    try jsonData.write(to: URL(fileURLWithPath: tmpFile))
+                    try fm.moveItem(atPath: tmpFile, toPath: sessionFile)
+                    created += 1
+                    NSLog("[ClaudeMonitor] Discovered %@ session: %@ (%@) on %@ %@", candidate.agent, project, sid, candidate.terminalType, candidate.terminalSessionId)
+                } catch {
+                    try? fm.removeItem(atPath: tmpFile)
+                }
+            }
+
+            if created > 0 {
+                NSLog("[ClaudeMonitor] Discovery found %d new session(s)", created)
+                DispatchQueue.main.async {
+                    self.readSessions()
+                }
+            }
+        }
     }
 }
 
 // MARK: - Terminal Switcher
 
-func switchToSession(_ session: SessionInfo) {
-    NSLog("[ClaudeMonitor] switchToSession: terminal=\(session.terminal) tty=\(session.terminal_session_id) project=\(session.project)")
-    if session.terminal == "iterm2" && !session.terminal_session_id.isEmpty {
-        switchToITerm2(sessionId: session.terminal_session_id)
-    } else if session.terminal == "terminal" && !session.terminal_session_id.isEmpty {
-        switchToTerminal(ttyPath: session.terminal_session_id)
-    } else {
-        NSLog("[ClaudeMonitor] falling back to cwd switch (no terminal info)")
-        switchByTerminalCwd(cwd: session.cwd)
+struct TerminalTarget {
+    let terminal: String
+    let sessionId: String
+}
+
+func currentTerminalTargetsByTTY() -> [String: TerminalTarget] {
+    var ttyTerminalMap: [String: TerminalTarget] = [:]
+
+    let wezTask = wezTermCLIProcess(arguments: ["list", "--format", "json"])
+    let wezPipe = Pipe()
+    wezTask.standardOutput = wezPipe
+    if let _ = try? wezTask.run() {
+        let wezData = wezPipe.fileHandleForReading.readDataToEndOfFile()
+        wezTask.waitUntilExit()
+        if let panes = try? JSONSerialization.jsonObject(with: wezData) as? [[String: Any]] {
+            for pane in panes {
+                if let paneId = pane["pane_id"] as? Int,
+                   let ttyName = pane["tty_name"] as? String, !ttyName.isEmpty {
+                    ttyTerminalMap[ttyName] = TerminalTarget(terminal: "wezterm", sessionId: String(paneId))
+                }
+            }
+        }
+    }
+
+    if NSRunningApplication.runningApplications(withBundleIdentifier: "com.googlecode.iterm2").first != nil {
+        let script = """
+        tell application "iTerm2"
+            set output to ""
+            repeat with w in windows
+                repeat with t in tabs of w
+                    repeat with s in sessions of t
+                        set output to output & (tty of s) & "|" & (unique id of s) & linefeed
+                    end repeat
+                end repeat
+            end repeat
+            return output
+        end tell
+        """
+        if let appleScript = NSAppleScript(source: script) {
+            var error: NSDictionary?
+            let result = appleScript.executeAndReturnError(&error)
+            if let output = result.stringValue {
+                for line in output.split(separator: "\n") {
+                    let parts = line.split(separator: "|", maxSplits: 1)
+                    if parts.count == 2 {
+                        let tty = String(parts[0])
+                        let sessionId = String(parts[1])
+                        if ttyTerminalMap[tty] == nil {
+                            ttyTerminalMap[tty] = TerminalTarget(terminal: "iterm2", sessionId: sessionId)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return ttyTerminalMap
+}
+
+func codexLogPath(for threadID: String) -> String? {
+    let home = FileManager.default.homeDirectoryForCurrentUser.path
+    let codexSessionsDir = "\(home)/.codex/sessions"
+    guard let enumerator = FileManager.default.enumerator(atPath: codexSessionsDir) else { return nil }
+    let suffix = "\(threadID).jsonl"
+    while let relativePath = enumerator.nextObject() as? String {
+        guard relativePath.hasSuffix(suffix) else { continue }
+        return "\(codexSessionsDir)/\(relativePath)"
+    }
+    return nil
+}
+
+func resolveTTYPath(forPid pid: String) -> String? {
+    let task = Process()
+    let pipe = Pipe()
+    task.executableURL = URL(fileURLWithPath: "/bin/sh")
+    task.arguments = ["-c", "ps -o tty= -p \(pid) 2>/dev/null"]
+    task.standardOutput = pipe
+    task.standardError = FileHandle.nullDevice
+    guard let _ = try? task.run() else { return nil }
+    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+    task.waitUntilExit()
+    let ttyShort = (String(data: data, encoding: .utf8) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !ttyShort.isEmpty, ttyShort != "??" else { return nil }
+    let sanitized = ttyShort.filter { $0.isLetter || $0.isNumber }
+    guard sanitized == ttyShort else { return nil }
+    return "/dev/\(ttyShort)"
+}
+
+func resolveLiveCodexTarget(threadID: String) -> TerminalTarget? {
+    guard let logPath = codexLogPath(for: threadID) else { return nil }
+
+    let lsofTask = Process()
+    let lsofPipe = Pipe()
+    lsofTask.executableURL = URL(fileURLWithPath: "/usr/sbin/lsof")
+    lsofTask.arguments = ["-t", logPath]
+    lsofTask.standardOutput = lsofPipe
+    lsofTask.standardError = FileHandle.nullDevice
+    guard let _ = try? lsofTask.run() else { return nil }
+    let lsofData = lsofPipe.fileHandleForReading.readDataToEndOfFile()
+    lsofTask.waitUntilExit()
+
+    let pids = Set((String(data: lsofData, encoding: .utf8) ?? "")
+        .split(separator: "\n")
+        .map { String($0).trimmingCharacters(in: .whitespaces) }
+        .filter { !$0.isEmpty })
+    guard pids.count == 1, let pid = pids.first,
+          let ttyPath = resolveTTYPath(forPid: pid) else { return nil }
+
+    let ttyTargets = currentTerminalTargetsByTTY()
+    if let target = ttyTargets[ttyPath] {
+        return target
+    }
+    return TerminalTarget(terminal: "terminal", sessionId: ttyPath)
+}
+
+func resolveLiveTarget(agent: String, cwd: String) -> TerminalTarget? {
+    guard !cwd.isEmpty else { return nil }
+
+    let agentPattern: String
+    switch agent {
+    case "codex":
+        agentPattern = "($3 == \"codex\" || $3 ~ /\\/codex$/)"
+    default:
+        agentPattern = "($3 == \"claude\")"
+    }
+
+    let psTask = Process()
+    let psPipe = Pipe()
+    psTask.executableURL = URL(fileURLWithPath: "/bin/sh")
+    psTask.arguments = ["-c", "ps -eo pid=,tty=,comm= | awk '\(agentPattern) {print $1 \"\\t\" $2}'"]
+    psTask.standardOutput = psPipe
+    psTask.standardError = FileHandle.nullDevice
+    guard let _ = try? psTask.run() else { return nil }
+    let psData = psPipe.fileHandleForReading.readDataToEndOfFile()
+    psTask.waitUntilExit()
+    let psOutput = String(data: psData, encoding: .utf8) ?? ""
+
+    struct CandidateTTY {
+        let pid: String
+        let ttyPath: String
+    }
+
+    var candidates: [CandidateTTY] = []
+    for line in psOutput.split(separator: "\n") {
+        let parts = line.split(separator: "\t")
+        guard parts.count == 2 else { continue }
+        let pid = String(parts[0]).trimmingCharacters(in: .whitespaces)
+        let ttyShort = String(parts[1]).trimmingCharacters(in: .whitespaces)
+        guard !ttyShort.isEmpty, ttyShort != "??" else { continue }
+        let sanitized = ttyShort.filter { $0.isLetter || $0.isNumber }
+        guard sanitized == ttyShort else { continue }
+        candidates.append(CandidateTTY(pid: pid, ttyPath: "/dev/\(ttyShort)"))
+    }
+
+    guard !candidates.isEmpty else { return nil }
+
+    let pidList = candidates.map(\.pid).joined(separator: ",")
+    let lsofTask = Process()
+    let lsofPipe = Pipe()
+    lsofTask.executableURL = URL(fileURLWithPath: "/usr/sbin/lsof")
+    lsofTask.arguments = ["-p", pidList, "-Fnf"]
+    lsofTask.standardOutput = lsofPipe
+    lsofTask.standardError = FileHandle.nullDevice
+    guard let _ = try? lsofTask.run() else { return nil }
+    let lsofData = lsofPipe.fileHandleForReading.readDataToEndOfFile()
+    lsofTask.waitUntilExit()
+    let lsofOutput = String(data: lsofData, encoding: .utf8) ?? ""
+
+    var pidToCwd: [String: String] = [:]
+    var currentPid: String?
+    var currentFD: String?
+    for line in lsofOutput.split(separator: "\n") {
+        if line.hasPrefix("p") {
+            currentPid = String(line.dropFirst())
+            currentFD = nil
+        } else if line.hasPrefix("f") {
+            currentFD = String(line.dropFirst())
+        } else if line.hasPrefix("n"), let pid = currentPid, currentFD == "cwd" {
+            pidToCwd[pid] = String(line.dropFirst())
+        }
+    }
+
+    let matchingTTYs = Set(candidates.filter { pidToCwd[$0.pid] == cwd }.map(\.ttyPath))
+    guard matchingTTYs.count == 1, let ttyPath = matchingTTYs.first else { return nil }
+
+    let ttyTargets = currentTerminalTargetsByTTY()
+    if let target = ttyTargets[ttyPath] {
+        return target
+    }
+    return TerminalTarget(terminal: "terminal", sessionId: ttyPath)
+}
+
+func persistTerminalTarget(sessionId: String, terminal: String, terminalSessionId: String) {
+    let home = FileManager.default.homeDirectoryForCurrentUser.path
+    let sessionFile = "\(home)/.claude/monitor/sessions/\(sessionId).json"
+    let fileURL = URL(fileURLWithPath: sessionFile)
+    guard let data = try? Data(contentsOf: fileURL),
+          var json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return }
+
+    json["terminal"] = terminal
+    json["terminal_session_id"] = terminalSessionId
+
+    guard let encoded = try? JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted, .sortedKeys]) else { return }
+    let tmpURL = fileURL.appendingPathExtension("tmp")
+    do {
+        try encoded.write(to: tmpURL)
+        _ = try FileManager.default.replaceItemAt(fileURL, withItemAt: tmpURL)
+    } catch {
+        try? FileManager.default.removeItem(at: tmpURL)
     }
 }
 
-func switchToITerm2(sessionId: String) {
-    // sessionId format from ITERM_SESSION_ID: "w0t0p0:GUID"
-    let parts = sessionId.split(separator: ":")
-    guard parts.count >= 2 else {
-        if let appleScript = NSAppleScript(source: "tell application \"iTerm2\" to activate") {
-            var error: NSDictionary?
-            appleScript.executeAndReturnError(&error)
-        }
+func switchToResolvedTarget(_ target: TerminalTarget, cwd: String) {
+    switch target.terminal {
+    case "iterm2":
+        switchToITerm2(sessionId: target.sessionId)
+    case "wezterm":
+        switchToWezTerm(paneId: target.sessionId)
+    case "terminal":
+        switchToTerminal(ttyPath: target.sessionId)
+    default:
+        switchByTerminalCwd(cwd: cwd)
+    }
+}
+
+func switchToSession(_ session: SessionInfo) {
+    NSLog("[ClaudeMonitor] switchToSession: terminal=\(session.terminal) tty=\(session.terminal_session_id) project=\(session.project)")
+    if session.agent == "codex",
+       !session.thread_id.isEmpty,
+       let liveTarget = resolveLiveCodexTarget(threadID: session.thread_id) {
+        persistTerminalTarget(sessionId: session.session_id, terminal: liveTarget.terminal, terminalSessionId: liveTarget.sessionId)
+        switchToResolvedTarget(liveTarget, cwd: session.cwd)
         return
     }
-    let uniqueId = String(parts[1])
+
+    if let liveTarget = resolveLiveTarget(agent: session.agent, cwd: session.cwd) {
+        persistTerminalTarget(sessionId: session.session_id, terminal: liveTarget.terminal, terminalSessionId: liveTarget.sessionId)
+        switchToResolvedTarget(liveTarget, cwd: session.cwd)
+        return
+    }
+
+    if !session.terminal_session_id.isEmpty {
+        switchToResolvedTarget(TerminalTarget(terminal: session.terminal, sessionId: session.terminal_session_id), cwd: session.cwd)
+        return
+    }
+
+    NSLog("[ClaudeMonitor] falling back to cwd switch (no terminal info)")
+    switchByTerminalCwd(cwd: session.cwd)
+}
+
+func switchToITerm2(sessionId: String) {
+    // Session IDs can come from hooks ("w0t0p0:GUID") or startup discovery ("GUID").
+    let uniqueId: String
+    if let suffix = sessionId.split(separator: ":", maxSplits: 1).last, sessionId.contains(":") {
+        uniqueId = String(suffix)
+    } else {
+        uniqueId = sessionId
+    }
+
+    // Sanitize: iTerm2 unique IDs are UUIDs (hex + dashes)
+    let sanitized = uniqueId.filter { $0.isHexDigit || $0 == "-" }
+    guard sanitized == uniqueId else {
+        NSLog("[ClaudeMonitor] switchToITerm2: rejecting suspicious uniqueId: %@", uniqueId)
+        return
+    }
 
     let script = """
     tell application "iTerm2"
@@ -949,7 +2018,7 @@ func switchToITerm2(sessionId: String) {
         repeat with w in windows
             repeat with t in tabs of w
                 repeat with s in sessions of t
-                    if unique id of s is "\(uniqueId)" then
+                    if unique id of s is "\(sanitized)" then
                         select t
                         return
                     end if
@@ -965,14 +2034,32 @@ func switchToITerm2(sessionId: String) {
     }
 }
 
+func switchToWezTerm(paneId: String) {
+    // Bring WezTerm to front
+    if let app = NSRunningApplication.runningApplications(withBundleIdentifier: "com.github.wez.wezterm").first {
+        app.activate()
+    }
+    // Focus the specific pane via wezterm CLI
+    let task = wezTermCLIProcess(arguments: ["activate-pane", "--pane-id", paneId])
+    task.standardOutput = FileHandle.nullDevice
+    try? task.run()
+}
+
 func switchToTerminal(ttyPath: String) {
+    // Sanitize: TTY paths are /dev/ttysNNN
+    let sanitized = ttyPath.filter { $0.isLetter || $0.isNumber || $0 == "/" }
+    guard sanitized == ttyPath else {
+        NSLog("[ClaudeMonitor] switchToTerminal: rejecting suspicious ttyPath: %@", ttyPath)
+        return
+    }
+
     // Match Terminal.app tab by its tty device path
     let script = """
     tell application "Terminal"
         activate
         repeat with w in windows
             repeat with t in tabs of w
-                if tty of t is "\(ttyPath)" then
+                if tty of t is "\(sanitized)" then
                     set selected tab of w to t
                     set index of w to 1
                     return
@@ -1003,41 +2090,73 @@ func killSession(_ session: SessionInfo) {
 
     if session.terminal == "terminal" && !session.terminal_session_id.isEmpty {
         ttyName = session.terminal_session_id.replacingOccurrences(of: "/dev/", with: "")
+    } else if session.terminal == "wezterm" && !session.terminal_session_id.isEmpty {
+        // Get TTY from wezterm CLI for this pane
+        let task = wezTermCLIProcess(arguments: ["list", "--format", "json"])
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        try? task.run()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        task.waitUntilExit()
+        if let panes = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+            for pane in panes {
+                if let paneId = pane["pane_id"] as? Int, String(paneId) == session.terminal_session_id {
+                    if let tty = pane["tty_name"] as? String {
+                        ttyName = tty.replacingOccurrences(of: "/dev/", with: "")
+                    }
+                    break
+                }
+            }
+        }
     } else if session.terminal == "iterm2" && !session.terminal_session_id.isEmpty {
-        let parts = session.terminal_session_id.split(separator: ":")
-        if parts.count >= 2 {
-            let uniqueId = String(parts[1])
-            let script = """
-            tell application "iTerm2"
-                repeat with w in windows
-                    repeat with t in tabs of w
-                        repeat with s in sessions of t
-                            if unique id of s is "\(uniqueId)" then
-                                return tty of s
-                            end if
-                        end repeat
+        let uniqueId: String
+        if let suffix = session.terminal_session_id.split(separator: ":", maxSplits: 1).last,
+           session.terminal_session_id.contains(":") {
+            uniqueId = String(suffix)
+        } else {
+            uniqueId = session.terminal_session_id
+        }
+
+        // Sanitize: iTerm2 unique IDs are UUIDs (hex + dashes)
+        let sanitizedId = uniqueId.filter { $0.isHexDigit || $0 == "-" }
+        guard sanitizedId == uniqueId else { return }
+        let script = """
+        tell application "iTerm2"
+            repeat with w in windows
+                repeat with t in tabs of w
+                    repeat with s in sessions of t
+                        if unique id of s is "\(sanitizedId)" then
+                            return tty of s
+                        end if
                     end repeat
                 end repeat
-            end tell
-            """
-            if let appleScript = NSAppleScript(source: script) {
-                var error: NSDictionary?
-                let result = appleScript.executeAndReturnError(&error)
-                if let tty = result.stringValue {
-                    ttyName = tty.replacingOccurrences(of: "/dev/", with: "")
-                }
+            end repeat
+        end tell
+        """
+        if let appleScript = NSAppleScript(source: script) {
+            var error: NSDictionary?
+            let result = appleScript.executeAndReturnError(&error)
+            if let tty = result.stringValue {
+                ttyName = tty.replacingOccurrences(of: "/dev/", with: "")
             }
         }
     }
 
     if let tty = ttyName {
+        // Sanitize: TTY names are alphanumeric (e.g., "ttys017")
+        let sanitized = tty.filter { $0.isLetter || $0.isNumber }
+        guard sanitized == tty else {
+            NSLog("[ClaudeMonitor] killSession: rejecting suspicious tty: %@", tty)
+            return
+        }
+        let processPattern = session.agent == "codex" ? "codex" : "claude"
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/bin/sh")
-        task.arguments = ["-c", "pkill -TERM -t \(tty) -f claude 2>/dev/null"]
+        task.arguments = ["-c", "pkill -TERM -t \(sanitized) -f \(processPattern) 2>/dev/null"]
         try? task.run()
     }
 
-    // Clean up session file after delay
+    // Remove session file — user explicitly dismissed it
     let home = FileManager.default.homeDirectoryForCurrentUser.path
     let sessionFile = "\(home)/.claude/monitor/sessions/\(session.session_id).json"
     DispatchQueue.global().asyncAfter(deadline: .now() + 3) {
@@ -1050,26 +2169,28 @@ func killSession(_ session: SessionInfo) {
 struct PulsingDot: View {
     let color: Color
     let isPulsing: Bool
+    var size: CGFloat = 8
 
+    @Environment(\.skin) private var skin
     @State private var scale: CGFloat = 1.0
 
     var body: some View {
         Circle()
             .fill(color)
-            .frame(width: 8, height: 8)
+            .frame(width: size, height: size)
             .scaleEffect(scale)
-            .shadow(color: color.opacity(0.6), radius: isPulsing ? 4 : 0)
+            .shadow(color: color.opacity(0.6), radius: (isPulsing && skin.id != "terminal") ? 4 : 0)
             .onAppear {
                 if isPulsing {
                     withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
-                        scale = 1.4
+                        scale = 1.15
                     }
                 }
             }
             .onChange(of: isPulsing) { _, newValue in
                 if newValue {
                     withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
-                        scale = 1.4
+                        scale = 1.15
                     }
                 } else {
                     withAnimation(.easeInOut(duration: 0.3)) {
@@ -1085,39 +2206,45 @@ struct PulsingDot: View {
 struct SessionRowView: View {
     let session: SessionInfo
     var onKill: (() -> Void)? = nil
+    @Environment(\.skin) private var skin
     @State private var isHovered = false
     @State private var isKilling = false
 
     var body: some View {
-        HStack(spacing: 8) {
+        let sc = session.statusColor(for: skin)
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
             PulsingDot(
-                color: session.statusColor,
-                isPulsing: session.status == "working"
+                color: sc,
+                isPulsing: session.status == "working",
+                size: skin.dotSize
             )
+            .alignmentGuide(.firstTextBaseline) { d in d[VerticalAlignment.center] + 2 }
 
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 6) {
                     Text(session.project)
-                        .font(.system(size: 12, weight: .semibold, design: .default))
-                        .foregroundColor(session.isStale ? .gray : .white)
+                        .font(.system(size: 12, weight: .semibold, design: skin.fontDesign))
+                        .foregroundColor(session.isStale ? skin.colors.sessionTitleStale : skin.colors.sessionTitle)
                         .lineLimit(1)
+                        .layoutPriority(1)
 
-                    Text(session.status)
-                        .font(.system(size: 9, weight: .medium, design: .monospaced))
-                        .foregroundColor(session.statusColor.opacity(session.isStale ? 0.6 : 1.0))
+                    Text(session.displayAgent.uppercased())
+                        .font(.system(size: 8, weight: .bold, design: .monospaced))
+                        .foregroundColor(skin.colors.statusBadgeText)
                         .padding(.horizontal, 5)
-                        .padding(.vertical, 1)
+                        .padding(.vertical, 2)
                         .background(
-                            Capsule()
-                                .fill(session.statusColor.opacity(session.isStale ? 0.15 : 0.3))
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(skin.colors.divider, lineWidth: 0.75)
                         )
+                        .fixedSize()
 
-                    Spacer()
+                    Spacer(minLength: 0)
 
                     if onKill != nil {
                         ZStack {
                             if isKilling {
-                                PulsingDot(color: .red, isPulsing: true)
+                                PulsingDot(color: .red, isPulsing: true, size: skin.dotSize)
                             } else if isHovered {
                                 Button {
                                     isKilling = true
@@ -1125,7 +2252,7 @@ struct SessionRowView: View {
                                 } label: {
                                     Image(systemName: "xmark")
                                         .font(.system(size: 9, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.35))
+                                        .foregroundColor(skin.colors.killButton)
                                         .contentShape(Rectangle())
                                 }
                                 .buttonStyle(.plain)
@@ -1136,13 +2263,14 @@ struct SessionRowView: View {
 
                     Text(session.elapsedString)
                         .font(.system(size: 10, design: .monospaced))
-                        .foregroundColor(.gray)
+                        .foregroundColor(skin.colors.timestamp)
+                        .fixedSize()
                 }
 
                 if !session.last_prompt.isEmpty {
                     Text(session.last_prompt)
-                        .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.4))
+                        .font(.system(size: 10, design: skin.fontDesign))
+                        .foregroundColor(skin.colors.sessionSubtext)
                         .lineLimit(1)
                         .truncationMode(.tail)
                 }
@@ -1161,6 +2289,7 @@ struct PermissionActionView: View {
     let sessionId: String
     let reader: SessionReader
     let onTerminal: () -> Void
+    @Environment(\.skin) private var skin
     @State private var responding: String? = nil
 
     var body: some View {
@@ -1169,16 +2298,16 @@ struct PermissionActionView: View {
             HStack(spacing: 5) {
                 Image(systemName: permission.toolIcon)
                     .font(.system(size: 10))
-                    .foregroundColor(.orange)
+                    .foregroundColor(skin.colors.attention)
                 Text(permission.tool_name)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.orange)
+                    .font(.system(size: 11, weight: .semibold, design: skin.fontDesign))
+                    .foregroundColor(skin.colors.attention)
             }
 
             // Command/detail text
             Text(permission.display)
                 .font(.system(size: 10, design: .monospaced))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(skin.colors.sessionSubtext.opacity(0.95))
                 .lineLimit(1)
                 .truncationMode(.tail)
                 .help(permission.display)
@@ -1186,10 +2315,10 @@ struct PermissionActionView: View {
             if let action = responding {
                 // Processing indicator
                 HStack(spacing: 6) {
-                    PulsingDot(color: action == "allow" ? .green : action == "deny" ? .red : .gray, isPulsing: true)
+                    PulsingDot(color: action == "allow" ? skin.colors.done : action == "deny" ? .red : skin.colors.starting, isPulsing: true, size: skin.dotSize)
                     Text(action == "allow" ? "Allowing..." : action == "deny" ? "Denying..." : "Switching...")
-                        .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.4))
+                        .font(.system(size: 10, design: skin.fontDesign))
+                        .foregroundColor(skin.colors.sessionSubtext)
                 }
             } else {
             // Action buttons
@@ -1202,14 +2331,14 @@ struct PermissionActionView: View {
                         Image(systemName: "checkmark")
                             .font(.system(size: 9, weight: .bold))
                         Text("Allow")
-                            .font(.system(size: 10, weight: .medium))
+                            .font(.system(size: 10, weight: .medium, design: skin.fontDesign))
                     }
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(skin.colors.buttonTextColor)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.green.opacity(0.4))
+                            .fill(skin.colors.done.opacity(0.4))
                     )
                     .contentShape(Rectangle())
                 }
@@ -1223,9 +2352,9 @@ struct PermissionActionView: View {
                         Image(systemName: "xmark")
                             .font(.system(size: 9, weight: .bold))
                         Text("Deny")
-                            .font(.system(size: 10, weight: .medium))
+                            .font(.system(size: 10, weight: .medium, design: skin.fontDesign))
                     }
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(skin.colors.buttonTextColor)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(
@@ -1245,14 +2374,14 @@ struct PermissionActionView: View {
                         Image(systemName: "arrow.right.square")
                             .font(.system(size: 9))
                         Text("Terminal")
-                            .font(.system(size: 10, weight: .medium))
+                            .font(.system(size: 10, weight: .medium, design: skin.fontDesign))
                     }
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(skin.colors.buttonTextColor)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.white.opacity(0.15))
+                            .fill(skin.colors.divider.opacity(0.9))
                     )
                     .contentShape(Rectangle())
                 }
@@ -1265,7 +2394,7 @@ struct PermissionActionView: View {
         .padding(.leading, 28)
         .padding(.trailing, 12)
         .padding(.vertical, 6)
-        .background(Color.orange.opacity(0.05))
+        .background(skin.colors.permissionBackground)
     }
 }
 
@@ -1278,32 +2407,68 @@ struct SettingsPopover: View {
     @ObservedObject var voiceFetcher: VoiceFetcher
     @ObservedObject var usageFetcher: UsageFetcher
     var sessionReader: SessionReader?
+    @Environment(\.skin) private var skin
     @State private var pastedVoiceId: String? = nil
     @State private var refreshed = false
-    @State private var isGenerating = false
-    @State private var generateResult: String? = nil
+
+    private let voiceModes: [(id: String, title: String, subtitle: String)] = [
+        ("say", "Vanilla say", "Built-in macOS speech"),
+        ("elevenlabs", "Live 11 Labs TTS", "Fresh API call on every announcement"),
+        ("cache", "Cached 11 Labs TTS", "Generate once, then replay instantly from cache")
+    ]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            // Skin picker section
+            Text("Skin")
+                .font(.system(size: 9, weight: .medium, design: skin.headerFontDesign))
+                .foregroundColor(skin.colors.sessionSubtext)
+                .textCase(.uppercase)
+
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(MonitorSkin.allSkins) { s in
+                    let isSelected = configManager.skinId == s.id
+                    Button {
+                        configManager.setSkin(s.id)
+                    } label: {
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(isSelected ? skin.colors.settingsAccent : skin.colors.divider)
+                                .frame(width: 6, height: 6)
+                            Text(s.name)
+                                .font(.system(size: 11, design: skin.fontDesign))
+                                .foregroundColor(isSelected ? skin.colors.sessionTitle : skin.colors.sessionSubtext)
+                                .lineLimit(1)
+                            Spacer()
+                        }
+                        .padding(.vertical, 2)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            Divider().background(skin.colors.divider)
+
             // Refresh sessions
             Button {
-                sessionReader?.discoverSessions()
+                sessionReader?.readSessions() // Immediate refresh of known sessions
+                sessionReader?.discoverSessions() // Async — finds new sessions, calls readSessions on completion
                 refreshed = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) { refreshed = false }
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: refreshed ? "checkmark" : "arrow.clockwise")
                         .font(.system(size: 10))
-                        .foregroundColor(refreshed ? .green : .white.opacity(0.4))
+                        .foregroundColor(refreshed ? skin.colors.done : skin.colors.sessionSubtext)
                     Text(refreshed ? "Refreshed" : "Refresh sessions")
-                        .font(.system(size: 11))
-                        .foregroundColor(refreshed ? .green.opacity(0.8) : .white.opacity(0.6))
+                        .font(.system(size: 11, design: skin.fontDesign))
+                        .foregroundColor(refreshed ? skin.colors.done.opacity(0.8) : skin.colors.sessionSubtext.opacity(0.95))
                     Spacer()
                 }
             }
             .buttonStyle(.plain)
 
-            Divider().background(Color.white.opacity(0.1))
+            Divider().background(skin.colors.divider)
 
             // Usage tracking toggle
             Button {
@@ -1313,16 +2478,16 @@ struct SettingsPopover: View {
                 HStack(spacing: 6) {
                     Image(systemName: configManager.usageEnabled ? "chart.bar.fill" : "chart.bar")
                         .font(.system(size: 10))
-                        .foregroundColor(configManager.usageEnabled ? .cyan : .gray)
+                        .foregroundColor(configManager.usageEnabled ? skin.colors.settingsAccent : skin.colors.timestamp)
                     Text(configManager.usageEnabled ? "Usage tracking on" : "Usage tracking off")
-                        .font(.system(size: 11))
-                        .foregroundColor(configManager.usageEnabled ? .white : .white.opacity(0.4))
+                        .font(.system(size: 11, design: skin.fontDesign))
+                        .foregroundColor(configManager.usageEnabled ? skin.colors.sessionTitle : skin.colors.sessionSubtext)
                     Spacer()
                 }
             }
             .buttonStyle(.plain)
 
-            Divider().background(Color.white.opacity(0.1))
+            Divider().background(skin.colors.divider)
 
             // Master toggle
             Button {
@@ -1331,162 +2496,118 @@ struct SettingsPopover: View {
                 HStack(spacing: 6) {
                     Image(systemName: configManager.voiceEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
                         .font(.system(size: 10))
-                        .foregroundColor(configManager.voiceEnabled ? .cyan : .gray)
+                        .foregroundColor(configManager.voiceEnabled ? skin.colors.settingsAccent : skin.colors.timestamp)
                     Text(configManager.voiceEnabled ? "Voice on" : "Voice off")
-                        .font(.system(size: 11))
-                        .foregroundColor(configManager.voiceEnabled ? .white : .white.opacity(0.4))
+                        .font(.system(size: 11, design: skin.fontDesign))
+                        .foregroundColor(configManager.voiceEnabled ? skin.colors.sessionTitle : skin.colors.sessionSubtext)
                     Spacer()
                 }
             }
             .buttonStyle(.plain)
 
             if configManager.voiceEnabled {
-                Divider().background(Color.white.opacity(0.1))
-
-                // Current voice display
-                if let name = configManager.voiceName(for: configManager.currentVoiceId) {
-                    HStack(spacing: 4) {
-                        Text(name)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(.cyan)
-                        Spacer()
-                        Text(String(configManager.currentVoiceId.prefix(8)))
-                            .font(.system(size: 9, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.2))
-                    }
-                }
+                Divider().background(skin.colors.divider)
 
                 Text("Voice")
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundColor(.white.opacity(0.4))
+                    .font(.system(size: 9, weight: .medium, design: skin.headerFontDesign))
+                    .foregroundColor(skin.colors.sessionSubtext)
                     .textCase(.uppercase)
 
-                if voiceFetcher.hasFetched || !(configManager.config?.voices ?? []).isEmpty {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 2) {
-                            ForEach(configManager.allVoices) { voice in
-                                let isSelected = configManager.currentVoiceId == voice.id
-                                Button {
-                                    configManager.setVoice(voice.id)
-                                    pastedVoiceId = nil
-                                } label: {
-                                    HStack(spacing: 6) {
-                                        Circle()
-                                            .fill(isSelected ? Color.cyan : Color.white.opacity(0.15))
-                                            .frame(width: 6, height: 6)
-                                        Text(voice.name)
-                                            .font(.system(size: 11))
-                                            .foregroundColor(isSelected ? .white : .white.opacity(0.5))
-                                            .lineLimit(1)
-                                        Spacer()
-                                    }
-                                    .padding(.vertical, 2)
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(voiceModes, id: \.id) { mode in
+                        let isSelected = configManager.ttsProvider == mode.id
+                        Button {
+                            configManager.setTTSProvider(mode.id)
+                        } label: {
+                            HStack(alignment: .top, spacing: 6) {
+                                Circle()
+                                    .fill(isSelected ? skin.colors.settingsAccent : skin.colors.divider)
+                                    .frame(width: 6, height: 6)
+                                    .padding(.top, 4)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(mode.title)
+                                        .font(.system(size: 11, design: skin.fontDesign))
+                                        .foregroundColor(isSelected ? skin.colors.sessionTitle : skin.colors.sessionSubtext)
+                                    Text(mode.subtitle)
+                                        .font(.system(size: 9, design: skin.fontDesign))
+                                        .foregroundColor(skin.colors.timestamp)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
-                                .buttonStyle(.plain)
+                                Spacer()
                             }
+                            .padding(.vertical, 2)
                         }
+                        .buttonStyle(.plain)
                     }
-                    .frame(maxHeight: 180)
-                } else {
-                    Text("Loading voices...")
-                        .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.3))
                 }
 
-                Divider().background(Color.white.opacity(0.1))
-
-                // Paste voice ID from clipboard
-                Button {
-                    if let pasted = NSPasteboard.general.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines),
-                       !pasted.isEmpty {
-                        configManager.setVoice(pasted)
-                        pastedVoiceId = String(pasted.prefix(20))
-                        // Resolve name and persist to voice list
-                        let voiceId = pasted
-                        if let existing = configManager.voiceName(for: voiceId) {
-                            configManager.addVoice(id: voiceId, name: existing)
-                        } else {
-                            voiceFetcher.resolveVoiceName(id: voiceId) { name in
-                                DispatchQueue.main.async {
-                                    configManager.addVoice(id: voiceId, name: name ?? "Voice \(String(voiceId.prefix(8)))")
-                                }
-                            }
-                        }
-                    }
-                } label: {
+                if configManager.ttsProvider == "say" {
                     HStack(spacing: 4) {
-                        Image(systemName: "doc.on.clipboard")
-                            .font(.system(size: 9))
-                            .foregroundColor(.white.opacity(0.3))
-                        Text("Paste voice ID")
-                            .font(.system(size: 10))
-                            .foregroundColor(.white.opacity(0.4))
+                        Text(configManager.config?.say.voice ?? "System voice")
+                            .font(.system(size: 11, weight: .medium, design: skin.fontDesign))
+                            .foregroundColor(skin.colors.settingsAccent)
                         Spacer()
+                        Text("macOS")
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundColor(skin.colors.divider.opacity(1.0))
                     }
-                }
-                .buttonStyle(.plain)
+                } else {
+                    Divider().background(skin.colors.divider)
 
-                if let pasted = pastedVoiceId {
-                    Text("Set to \(pasted)...")
-                        .font(.system(size: 9, design: .monospaced))
-                        .foregroundColor(.green.opacity(0.6))
-                }
+                    if let name = configManager.voiceName(for: configManager.currentVoiceId) {
+                        HStack(spacing: 4) {
+                            Text(name)
+                                .font(.system(size: 11, weight: .medium, design: skin.fontDesign))
+                                .foregroundColor(skin.colors.settingsAccent)
+                            Spacer()
+                            Text(String(configManager.currentVoiceId.prefix(8)))
+                                .font(.system(size: 9, design: .monospaced))
+                                .foregroundColor(skin.colors.divider.opacity(1.0))
+                        }
+                    }
 
-                // Generate voice from design prompt
-                if let prompt = configManager.config?.elevenlabs.voice_design_prompt, !prompt.isEmpty {
-                    Divider().background(Color.white.opacity(0.1))
+                    Divider().background(skin.colors.divider)
 
                     Button {
-                        guard !isGenerating else { return }
-                        isGenerating = true
-                        generateResult = nil
-                        let voiceName = configManager.config?.elevenlabs.voice_design_name ?? "claude-monitor"
-                        voiceFetcher.designVoice(prompt: prompt, name: voiceName) { voiceId, name in
-                            DispatchQueue.main.async {
-                                isGenerating = false
-                                if let voiceId = voiceId, let name = name {
-                                    configManager.setVoice(voiceId)
-                                    configManager.addVoice(id: voiceId, name: name)
-                                    generateResult = name
-                                    voiceFetcher.fetchVoices()
-                                } else {
-                                    generateResult = "failed"
+                        if let pasted = NSPasteboard.general.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                           !pasted.isEmpty {
+                            configManager.setVoice(pasted)
+                            pastedVoiceId = String(pasted.prefix(20))
+                            let voiceId = pasted
+                            if let existing = configManager.voiceName(for: voiceId) {
+                                configManager.addVoice(id: voiceId, name: existing)
+                            } else {
+                                voiceFetcher.resolveVoiceName(id: voiceId) { name in
+                                    DispatchQueue.main.async {
+                                        configManager.addVoice(id: voiceId, name: name ?? "Voice \(String(voiceId.prefix(8)))")
+                                    }
                                 }
                             }
                         }
                     } label: {
                         HStack(spacing: 4) {
-                            if isGenerating {
-                                ProgressView()
-                                    .scaleEffect(0.5)
-                                    .frame(width: 10, height: 10)
-                            } else {
-                                Image(systemName: "wand.and.stars")
-                                    .font(.system(size: 9))
-                                    .foregroundColor(.purple.opacity(0.6))
-                            }
-                            Text(isGenerating ? "Generating..." : "Generate voice")
-                                .font(.system(size: 10))
-                                .foregroundColor(isGenerating ? .purple.opacity(0.4) : .purple.opacity(0.6))
+                            Image(systemName: "doc.on.clipboard")
+                                .font(.system(size: 9))
+                                .foregroundColor(skin.colors.sessionSubtext)
+                            Text("Paste voice ID")
+                                .font(.system(size: 10, design: skin.fontDesign))
+                                .foregroundColor(skin.colors.sessionSubtext)
                             Spacer()
                         }
                     }
                     .buttonStyle(.plain)
-                    .disabled(isGenerating)
 
-                    if let result = generateResult {
-                        Text(result == "failed" ? "Generation failed" : "Created \"\(result)\"")
+                    if let pasted = pastedVoiceId {
+                        Text("Set to \(pasted)...")
                             .font(.system(size: 9, design: .monospaced))
-                            .foregroundColor(result == "failed" ? .red.opacity(0.6) : .green.opacity(0.6))
+                            .foregroundColor(skin.colors.done.opacity(0.6))
                     }
                 }
             }
         }
         .padding(10)
         .frame(width: 200)
-        .background(
-            VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
-        )
+        .modifier(PopoverContentBackground(skin: skin, glassConfig: configManager.glassConfig))
     }
 }
 
@@ -1496,13 +2617,14 @@ struct UsageBarView: View {
     let label: String
     let window: UsageWindow
     let compact: Bool
+    @Environment(\.skin) private var skin
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack {
                 Text(label)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(.white.opacity(0.6))
+                    .font(.system(size: 10, weight: .medium, design: skin.fontDesign))
+                    .foregroundColor(skin.colors.sessionSubtext.opacity(0.95))
                 Spacer()
                 Text("\(Int(window.utilizationPercent))%")
                     .font(.system(size: 10, weight: .semibold, design: .monospaced))
@@ -1513,7 +2635,7 @@ struct UsageBarView: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(Color.white.opacity(0.08))
+                        .fill(skin.colors.divider)
                         .frame(height: 4)
                     RoundedRectangle(cornerRadius: 2)
                         .fill(window.barColor)
@@ -1525,7 +2647,7 @@ struct UsageBarView: View {
             if !compact {
                 Text("resets \(window.resetCountdown)")
                     .font(.system(size: 9, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.3))
+                    .foregroundColor(skin.colors.sessionSubtext)
             }
         }
     }
@@ -1534,20 +2656,21 @@ struct UsageBarView: View {
 struct UsagePopover: View {
     @ObservedObject var fetcher: UsageFetcher
     @ObservedObject var configManager: ConfigManager
+    @Environment(\.skin) private var skin
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("Usage")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.8))
+                    .font(.system(size: 11, weight: .semibold, design: skin.headerFontDesign))
+                    .foregroundColor(skin.colors.headerText)
                 Spacer()
                 Button {
                     fetcher.fetch()
                 } label: {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 9))
-                        .foregroundColor(.white.opacity(0.3))
+                        .foregroundColor(skin.colors.sessionSubtext)
                 }
                 .buttonStyle(.plain)
             }
@@ -1556,10 +2679,10 @@ struct UsagePopover: View {
                 HStack(spacing: 4) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 9))
-                        .foregroundColor(.orange)
+                        .foregroundColor(skin.colors.attention)
                     Text(error)
-                        .font(.system(size: 10))
-                        .foregroundColor(.orange.opacity(0.8))
+                        .font(.system(size: 10, design: skin.fontDesign))
+                        .foregroundColor(skin.colors.attention.opacity(0.8))
                 }
                 // Offer to disable when credentials are the problem
                 if error == "No credentials" || error == "Auth expired" {
@@ -1568,8 +2691,8 @@ struct UsagePopover: View {
                         fetcher.setEnabled(false)
                     } label: {
                         Text("Disable usage tracking")
-                            .font(.system(size: 9))
-                            .foregroundColor(.white.opacity(0.3))
+                            .font(.system(size: 9, design: skin.fontDesign))
+                            .foregroundColor(skin.colors.sessionSubtext)
                             .underline()
                     }
                     .buttonStyle(.plain)
@@ -1593,15 +2716,15 @@ struct UsagePopover: View {
 
                 // Extra usage credits
                 if let extra = usage.extra_usage, extra.is_enabled == true {
-                    Divider().background(Color.white.opacity(0.1))
+                    Divider().background(skin.colors.divider)
                     HStack {
                         Text("Credits")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.white.opacity(0.6))
+                            .font(.system(size: 10, weight: .medium, design: skin.fontDesign))
+                            .foregroundColor(skin.colors.sessionSubtext.opacity(0.95))
                         Spacer()
                         Text(String(format: "$%.2f / $%.0f", extra.usedDollars, extra.limitDollars))
                             .font(.system(size: 10, design: .monospaced))
-                            .foregroundColor(.white.opacity(0.5))
+                            .foregroundColor(skin.colors.sessionSubtext)
                     }
                 }
 
@@ -1609,7 +2732,7 @@ struct UsagePopover: View {
                     let ago = Int(Date().timeIntervalSince(lastFetched))
                     Text(ago < 5 ? "just now" : "\(ago)s ago")
                         .font(.system(size: 8, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.15))
+                        .foregroundColor(skin.colors.divider)
                 }
             } else {
                 HStack(spacing: 4) {
@@ -1617,19 +2740,355 @@ struct UsagePopover: View {
                         .scaleEffect(0.5)
                         .frame(width: 10, height: 10)
                     Text("Loading...")
-                        .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.3))
+                        .font(.system(size: 10, design: skin.fontDesign))
+                        .foregroundColor(skin.colors.sessionSubtext)
                 }
             }
         }
         .padding(10)
         .frame(width: 200)
-        .background(
-            VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
-        )
+        .modifier(PopoverContentBackground(skin: skin, glassConfig: configManager.glassConfig))
         .onAppear {
             fetcher.fetchIfStale()
         }
+    }
+}
+
+private enum MonitorPopoverKind {
+    case usage
+    case settings
+}
+
+private final class MonitorPopoverPanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { false }
+
+    init() {
+        super.init(
+            contentRect: NSRect(x: 0, y: 0, width: 200, height: 120),
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+
+        level = .floating
+        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        isOpaque = false
+        backgroundColor = .clear
+        hasShadow = false
+        isMovableByWindowBackground = false
+        hidesOnDeactivate = true
+    }
+}
+
+private struct MonitorPopoverAnchorReader: NSViewRepresentable {
+    let kind: MonitorPopoverKind
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        view.postsFrameChangedNotifications = true
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async {
+            MonitorPopoverManager.shared.register(anchorView: nsView, for: kind)
+        }
+    }
+}
+
+private struct MonitorPopoverSurface<Content: View>: View {
+    @ObservedObject var configManager: ConfigManager
+    let content: Content
+
+    init(configManager: ConfigManager, @ViewBuilder content: () -> Content) {
+        _configManager = ObservedObject(wrappedValue: configManager)
+        self.content = content()
+    }
+
+    private var skin: MonitorSkin { configManager.currentSkin }
+    private var panelShadow: MonitorPanelShadowStyle { shadowStyle(for: skin) }
+    private var surfaceShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: skin.cornerRadius, style: .continuous)
+    }
+
+    var body: some View {
+        content
+            .background(
+                Group {
+                    if skin.id == "glass" {
+                        SkinAwareBackground(skin: skin, glassConfig: configManager.glassConfig)
+                    }
+                }
+            )
+            .clipShape(surfaceShape)
+            .overlay(
+                Group {
+                    if skin.id == "obsidian" {
+                        surfaceShape
+                            .strokeBorder(
+                                LinearGradient(
+                                    stops: [
+                                        .init(color: Color(white: 1.0, opacity: 0.08), location: 0.0),
+                                        .init(color: Color(white: 1.0, opacity: 0.03), location: 0.15),
+                                        .init(color: .clear, location: 0.4),
+                                        .init(color: .clear, location: 1.0),
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 2.0
+                        )
+                    } else if skin.borderWidth > 0 {
+                        surfaceShape
+                            .strokeBorder(skin.colors.border, lineWidth: skin.borderWidth + 1)
+                    }
+                }
+                .allowsHitTesting(false)
+            )
+            .shadow(color: panelShadow.color, radius: panelShadow.radius, y: panelShadow.y)
+            .environment(\.skin, skin)
+    }
+}
+
+private final class MonitorPopoverManager {
+    static let shared = MonitorPopoverManager()
+
+    private final class WeakAnchorView {
+        weak var view: NSView?
+        init(_ view: NSView) { self.view = view }
+    }
+
+    private var anchors: [MonitorPopoverKind: WeakAnchorView] = [:]
+    private weak var parentWindow: NSWindow?
+    private weak var anchorView: NSView?
+    private var panel: MonitorPopoverPanel?
+    private var currentKind: MonitorPopoverKind?
+    private var localMonitor: Any?
+    private var globalMonitor: Any?
+    private var resignActiveObserver: Any?
+    private var parentWindowCloseObserver: Any?
+    private var sizeObserver: AnyCancellable?
+    private var skinObserver: AnyCancellable?
+
+    func register(anchorView: NSView, for kind: MonitorPopoverKind) {
+        anchors[kind] = WeakAnchorView(anchorView)
+    }
+
+    func toggle(
+        kind: MonitorPopoverKind,
+        configManager: ConfigManager,
+        usageFetcher: UsageFetcher,
+        sessionReader: SessionReader?
+    ) {
+        if currentKind == kind {
+            close()
+            return
+        }
+
+        show(
+            kind: kind,
+            configManager: configManager,
+            usageFetcher: usageFetcher,
+            sessionReader: sessionReader
+        )
+    }
+
+    func close() {
+        if let localMonitor {
+            NSEvent.removeMonitor(localMonitor)
+            self.localMonitor = nil
+        }
+        if let globalMonitor {
+            NSEvent.removeMonitor(globalMonitor)
+            self.globalMonitor = nil
+        }
+        if let resignActiveObserver {
+            NotificationCenter.default.removeObserver(resignActiveObserver)
+            self.resignActiveObserver = nil
+        }
+        if let parentWindowCloseObserver {
+            NotificationCenter.default.removeObserver(parentWindowCloseObserver)
+            self.parentWindowCloseObserver = nil
+        }
+        sizeObserver?.cancel()
+        sizeObserver = nil
+        skinObserver?.cancel()
+        skinObserver = nil
+        if let panel, let parentWindow {
+            parentWindow.removeChildWindow(panel)
+            panel.orderOut(nil)
+        } else {
+            panel?.orderOut(nil)
+        }
+        anchorView = nil
+        panel = nil
+        parentWindow = nil
+        currentKind = nil
+    }
+
+    private func show(
+        kind: MonitorPopoverKind,
+        configManager: ConfigManager,
+        usageFetcher: UsageFetcher,
+        sessionReader: SessionReader?
+    ) {
+        close()
+
+        guard let anchorView = anchors[kind]?.view,
+              let anchorWindow = anchorView.window else { return }
+
+        let rootView = buildRootView(
+            kind: kind,
+            configManager: configManager,
+            usageFetcher: usageFetcher,
+            sessionReader: sessionReader
+        )
+        let hostingView = ClickHostingView(rootView: rootView)
+        hostingView.wantsLayer = true
+        hostingView.layer?.backgroundColor = .clear
+        hostingView.layer?.cornerRadius = configManager.currentSkin.cornerRadius
+        hostingView.layer?.cornerCurve = .continuous
+        hostingView.layer?.masksToBounds = true
+
+        let fittingSize = hostingView.fittingSize
+        hostingView.frame = NSRect(origin: .zero, size: fittingSize)
+
+        let panel = MonitorPopoverPanel()
+        panel.contentView = hostingView
+        panel.setContentSize(fittingSize)
+
+        position(panel: panel, relativeTo: anchorView)
+        anchorWindow.addChildWindow(panel, ordered: .above)
+        panel.orderFrontRegardless()
+
+        self.parentWindow = anchorWindow
+        self.anchorView = anchorView
+        self.panel = panel
+        self.currentKind = kind
+        installSizeObserver(hostingView: hostingView)
+        installSkinObserver(hostingView: hostingView, configManager: configManager)
+        installCloseMonitors()
+    }
+
+    private func buildRootView(
+        kind: MonitorPopoverKind,
+        configManager: ConfigManager,
+        usageFetcher: UsageFetcher,
+        sessionReader: SessionReader?
+    ) -> AnyView {
+        AnyView(
+            MonitorPopoverSurface(configManager: configManager) {
+                switch kind {
+                case .usage:
+                    UsagePopover(fetcher: usageFetcher, configManager: configManager)
+                case .settings:
+                    SettingsPopover(
+                        configManager: configManager,
+                        voiceFetcher: configManager.voiceFetcher,
+                        usageFetcher: usageFetcher,
+                        sessionReader: sessionReader
+                    )
+                }
+            }
+        )
+    }
+
+    private func position(panel: NSPanel, relativeTo anchorView: NSView) {
+        guard let anchorWindow = anchorView.window else { return }
+
+        let anchorRectInWindow = anchorView.convert(anchorView.bounds, to: nil)
+        let anchorRectOnScreen = anchorWindow.convertToScreen(anchorRectInWindow)
+        let size = panel.contentView?.fittingSize ?? panel.frame.size
+        let screenFrame = anchorWindow.screen?.visibleFrame ?? NSScreen.main?.visibleFrame ?? .zero
+        let padding: CGFloat = 8
+        let gap: CGFloat = 6
+
+        var x = anchorRectOnScreen.midX - (size.width / 2)
+        x = min(max(x, screenFrame.minX + padding), screenFrame.maxX - size.width - padding)
+
+        var y = anchorRectOnScreen.minY - size.height - gap
+        if y < screenFrame.minY + padding {
+            y = anchorRectOnScreen.maxY + gap
+        }
+
+        panel.setFrame(NSRect(x: x, y: y, width: size.width, height: size.height), display: true)
+    }
+
+    private func installCloseMonitors() {
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown, .keyDown]) { [weak self] event in
+            self?.handleLocalEvent(event)
+            return event
+        }
+
+        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] _ in
+            self?.close()
+        }
+
+        resignActiveObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.close()
+        }
+
+        if let parentWindow {
+            parentWindowCloseObserver = NotificationCenter.default.addObserver(
+                forName: NSWindow.willCloseNotification,
+                object: parentWindow,
+                queue: .main
+            ) { [weak self] _ in
+                self?.close()
+            }
+        }
+    }
+
+    private func handleLocalEvent(_ event: NSEvent) {
+        if event.type == .keyDown, event.keyCode == 53 {
+            close()
+            return
+        }
+
+        guard let panel else { return }
+        if event.window === panel { return }
+        if isEventInsideAnyAnchor(event) { return }
+        close()
+    }
+
+    private func installSizeObserver(hostingView: NSHostingView<AnyView>) {
+        sizeObserver?.cancel()
+        sizeObserver = hostingView.publisher(for: \.fittingSize)
+            .debounce(for: .milliseconds(20), scheduler: RunLoop.main)
+            .sink { [weak self, weak hostingView] newSize in
+                guard let self, let panel = self.panel, let anchorView = self.anchorView else { return }
+                hostingView?.frame = NSRect(origin: .zero, size: newSize)
+                panel.setContentSize(newSize)
+                self.position(panel: panel, relativeTo: anchorView)
+            }
+    }
+
+    private func installSkinObserver(hostingView: NSHostingView<AnyView>, configManager: ConfigManager) {
+        skinObserver?.cancel()
+        skinObserver = configManager.$currentSkin
+            .sink { [weak hostingView] skin in
+                hostingView?.layer?.cornerRadius = skin.cornerRadius
+                hostingView?.layer?.cornerCurve = .continuous
+                hostingView?.layer?.masksToBounds = true
+            }
+    }
+
+    private func isEventInsideAnyAnchor(_ event: NSEvent) -> Bool {
+        for anchor in anchors.values {
+            guard let view = anchor.view,
+                  let window = view.window,
+                  event.window === window else { continue }
+            let point = view.convert(event.locationInWindow, from: nil)
+            if view.bounds.contains(point) {
+                return true
+            }
+        }
+        return false
     }
 }
 
@@ -1641,8 +3100,7 @@ struct HeaderBar: View {
     @ObservedObject var usageFetcher: UsageFetcher
     var sessionReader: SessionReader?
     @Binding var isExpanded: Bool
-    @State private var showSettings = false
-    @State private var showUsage = false
+    @Environment(\.skin) private var skin
 
     var attentionCount: Int { sessions.filter { $0.status == "attention" }.count }
     var workingCount: Int { sessions.filter { $0.status == "working" }.count }
@@ -1652,22 +3110,20 @@ struct HeaderBar: View {
         HStack(spacing: 10) {
             // Chevron + title
             Button {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    isExpanded.toggle()
-                    UserDefaults.standard.set(isExpanded, forKey: "monitorExpanded")
-                }
+                isExpanded.toggle()
+                UserDefaults.standard.set(isExpanded, forKey: "monitorExpanded")
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .font(.system(size: 8, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.3))
+                        .foregroundColor(skin.colors.chevron)
                         .frame(width: 10)
                     Image(systemName: "terminal.fill")
                         .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(skin.colors.headerIcon)
                     Text("Claude")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.8))
+                        .font(.system(size: 11, weight: .semibold, design: skin.headerFontDesign))
+                        .foregroundColor(skin.colors.headerText)
                 }
                 .contentShape(Rectangle())
             }
@@ -1678,58 +3134,64 @@ struct HeaderBar: View {
             HStack(spacing: 8) {
                 if attentionCount > 0 {
                     HStack(spacing: 3) {
-                        Circle().fill(Color.orange).frame(width: 6, height: 6)
+                        Circle().fill(skin.colors.attention).frame(width: skin.dotSize - 2, height: skin.dotSize - 2)
                         Text("\(attentionCount)")
                             .font(.system(size: 10, weight: .medium, design: .monospaced))
-                            .foregroundColor(.orange)
+                            .foregroundColor(skin.colors.attention)
                     }
                 }
                 if workingCount > 0 {
                     HStack(spacing: 3) {
-                        Circle().fill(Color.cyan).frame(width: 6, height: 6)
+                        Circle().fill(skin.colors.working).frame(width: skin.dotSize - 2, height: skin.dotSize - 2)
                         Text("\(workingCount)")
                             .font(.system(size: 10, weight: .medium, design: .monospaced))
-                            .foregroundColor(.cyan)
+                            .foregroundColor(skin.colors.working)
                     }
                 }
                 if doneCount > 0 {
                     HStack(spacing: 3) {
-                        Circle().fill(Color.green).frame(width: 6, height: 6)
+                        Circle().fill(skin.colors.done).frame(width: skin.dotSize - 2, height: skin.dotSize - 2)
                         Text("\(doneCount)")
                             .font(.system(size: 10, weight: .medium, design: .monospaced))
-                            .foregroundColor(.green)
+                            .foregroundColor(skin.colors.done)
                     }
                 }
 
                 Text("\(sessions.count)")
                     .font(.system(size: 10, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.4))
+                    .foregroundColor(skin.colors.timestamp)
 
                 if configManager.usageEnabled {
                     Button {
-                        showUsage.toggle()
+                        MonitorPopoverManager.shared.toggle(
+                            kind: .usage,
+                            configManager: configManager,
+                            usageFetcher: usageFetcher,
+                            sessionReader: sessionReader
+                        )
                     } label: {
                         Image(systemName: "chart.bar.fill")
                             .font(.system(size: 8))
                             .foregroundColor(usageIconColor)
                     }
                     .buttonStyle(.plain)
-                    .popover(isPresented: $showUsage, arrowEdge: .bottom) {
-                        UsagePopover(fetcher: usageFetcher, configManager: configManager)
-                    }
+                    .background(MonitorPopoverAnchorReader(kind: .usage))
                 }
 
                 Button {
-                    showSettings.toggle()
+                    MonitorPopoverManager.shared.toggle(
+                        kind: .settings,
+                        configManager: configManager,
+                        usageFetcher: usageFetcher,
+                        sessionReader: sessionReader
+                    )
                 } label: {
                     Image(systemName: "gearshape")
                         .font(.system(size: 8))
-                        .foregroundColor(.white.opacity(0.2))
+                        .foregroundColor(skin.colors.chevron)
                 }
                 .buttonStyle(.plain)
-                .popover(isPresented: $showSettings, arrowEdge: .bottom) {
-                    SettingsPopover(configManager: configManager, voiceFetcher: configManager.voiceFetcher, usageFetcher: usageFetcher, sessionReader: sessionReader)
-                }
+                .background(MonitorPopoverAnchorReader(kind: .settings))
             }
         }
         .padding(.horizontal, 12)
@@ -1737,12 +3199,171 @@ struct HeaderBar: View {
     }
 
     private var usageIconColor: Color {
-        guard let usage = usageFetcher.usage else { return .white.opacity(0.2) }
+        guard let usage = usageFetcher.usage else { return skin.colors.chevron }
         // Reflect the worst quota status
         let maxUtil = max(usage.five_hour?.utilizationPercent ?? 0, usage.seven_day?.utilizationPercent ?? 0)
         if maxUtil > 80 { return .red.opacity(0.7) }
         if maxUtil > 50 { return .yellow.opacity(0.6) }
-        return .white.opacity(0.2)
+        return skin.colors.chevron
+    }
+}
+
+// MARK: - Skin-Aware Background
+
+private struct TeletypeGrainOverlay: View {
+    @State private var normalizedDots: [CGPoint] = []
+
+    var body: some View {
+        GeometryReader { geometry in
+            Canvas { context, size in
+                let grainColor = Color(red: 0.922, green: 0.878, blue: 0.784).opacity(0.4)
+                for dot in normalizedDots {
+                    let rect = CGRect(
+                        x: dot.x * size.width,
+                        y: dot.y * size.height,
+                        width: 1,
+                        height: 1
+                    )
+                    context.fill(Path(ellipseIn: rect), with: .color(grainColor))
+                }
+            }
+            .onAppear {
+                if normalizedDots.isEmpty {
+                    normalizedDots = Self.makeDots(count: 400)
+                }
+            }
+            .onChange(of: geometry.size) { _, _ in
+                if normalizedDots.isEmpty {
+                    normalizedDots = Self.makeDots(count: 400)
+                }
+            }
+        }
+        .allowsHitTesting(false)
+    }
+
+    private static func makeDots(count: Int) -> [CGPoint] {
+        var generator = SeededGenerator(seed: 0x54454C45)
+        return (0..<count).map { _ in
+            CGPoint(x: Double.random(in: 0...1, using: &generator), y: Double.random(in: 0...1, using: &generator))
+        }
+    }
+}
+
+private struct TeletypePlatenRulesOverlay: View {
+    var body: some View {
+        Canvas { context, size in
+            var path = Path()
+            for y in stride(from: 24.0, through: size.height, by: 24.0) {
+                path.move(to: CGPoint(x: 0, y: y))
+                path.addLine(to: CGPoint(x: size.width, y: y))
+            }
+            context.stroke(
+                path,
+                with: .color(Color(red: 0.847, green: 0.792, blue: 0.659).opacity(0.5)),
+                lineWidth: 0.5
+            )
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+private struct TeletypeBackground: View {
+    var body: some View {
+        ZStack {
+            Color(red: 0.957, green: 0.918, blue: 0.835)
+            TeletypeGrainOverlay()
+            TeletypePlatenRulesOverlay()
+        }
+    }
+}
+
+private struct SeededGenerator: RandomNumberGenerator {
+    private var state: UInt64
+
+    init(seed: UInt64) {
+        state = seed
+    }
+
+    mutating func next() -> UInt64 {
+        state = state &* 6364136223846793005 &+ 1
+        return state
+    }
+}
+
+private struct MonitorPanelShadowStyle {
+    let color: Color
+    let radius: CGFloat
+    let y: CGFloat
+}
+
+private func shadowStyle(for skin: MonitorSkin) -> MonitorPanelShadowStyle {
+    switch skin.id {
+    case "obsidian":
+        return MonitorPanelShadowStyle(color: .black.opacity(0.7), radius: 16, y: 8)
+    case "terminal":
+        return MonitorPanelShadowStyle(color: .black.opacity(0.45), radius: 8, y: 3)
+    case "teletype":
+        return MonitorPanelShadowStyle(
+            color: Color(red: 0.102, green: 0.078, blue: 0.063).opacity(0.18),
+            radius: 18,
+            y: 4
+        )
+    default:
+        return MonitorPanelShadowStyle(color: skin.colors.shadow, radius: 12, y: 4)
+    }
+}
+
+struct SkinAwareBackground: View {
+    let skin: MonitorSkin
+    var glassConfig: MonitorConfig.GlassConfig = ConfigManager.defaultGlass
+
+    var body: some View {
+        if skin.id == "obsidian" {
+            // Dark neumorphic: subtle top-to-bottom gradient
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.13, green: 0.13, blue: 0.14),  // slightly lighter top
+                        Color(red: 0.09, green: 0.09, blue: 0.10),  // darker bottom
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+        } else if skin.id == "teletype" {
+            TeletypeBackground()
+        } else if skin.usesVibrancy {
+            VisualEffectView(
+                material: skin.material,
+                blendingMode: .behindWindow,
+                blurAlpha: CGFloat(glassConfig.blur),
+                fillOpacity: CGFloat(glassConfig.opacity),
+                tintColor: NSColor(
+                    red: CGFloat(glassConfig.tintR),
+                    green: CGFloat(glassConfig.tintG),
+                    blue: CGFloat(glassConfig.tintB),
+                    alpha: CGFloat(glassConfig.tintStrength)
+                )
+            )
+        } else {
+            skin.colors.panelBackground
+        }
+    }
+}
+
+private struct PopoverContentBackground: ViewModifier {
+    let skin: MonitorSkin
+    let glassConfig: MonitorConfig.GlassConfig
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if skin.id == "glass" {
+            content
+        } else {
+            content.background(
+                SkinAwareBackground(skin: skin, glassConfig: glassConfig)
+            )
+        }
     }
 }
 
@@ -1754,6 +3375,12 @@ struct MonitorContentView: View {
     @ObservedObject var usageFetcher: UsageFetcher
     @State private var isExpanded: Bool = UserDefaults.standard.object(forKey: "monitorExpanded") as? Bool ?? true
 
+    var skin: MonitorSkin { configManager.currentSkin }
+    private var panelShadow: MonitorPanelShadowStyle { shadowStyle(for: skin) }
+    private var surfaceShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: skin.cornerRadius, style: .continuous)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Header — always visible, drag to move
@@ -1761,7 +3388,7 @@ struct MonitorContentView: View {
 
             if isExpanded && !reader.sessions.isEmpty {
                 Divider()
-                    .background(Color.white.opacity(0.1))
+                    .background(skin.colors.divider)
 
                 ScrollView {
                     VStack(spacing: 0) {
@@ -1785,7 +3412,7 @@ struct MonitorContentView: View {
 
                             if session.id != reader.sessions.last?.id {
                                 Divider()
-                                    .background(Color.white.opacity(0.05))
+                                    .background(skin.colors.divider.opacity(0.5))
                                     .padding(.horizontal, 12)
                             }
                         }
@@ -1798,14 +3425,36 @@ struct MonitorContentView: View {
         .frame(width: 280)
         .fixedSize(horizontal: false, vertical: true)
         .background(
-            VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
+            SkinAwareBackground(skin: skin, glassConfig: configManager.glassConfig)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(surfaceShape)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
+            Group {
+                if skin.id == "obsidian" {
+                    // Obsidian: top-edge highlight only
+                    surfaceShape
+                        .strokeBorder(
+                            LinearGradient(
+                                stops: [
+                                    .init(color: Color(white: 1.0, opacity: 0.08), location: 0.0),
+                                    .init(color: Color(white: 1.0, opacity: 0.03), location: 0.15),
+                                    .init(color: .clear, location: 0.4),
+                                    .init(color: .clear, location: 1.0),
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 2.0
+                        )
+                } else if skin.borderWidth > 0 {
+                    surfaceShape
+                        .strokeBorder(skin.colors.border, lineWidth: skin.borderWidth + 1)
+                }
+            }
+            .allowsHitTesting(false)
         )
-        .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
+        .shadow(color: panelShadow.color, radius: panelShadow.radius, y: panelShadow.y)
+        .environment(\.skin, skin)
     }
 }
 
@@ -1813,18 +3462,18 @@ struct MonitorContentView: View {
 
 class ThinScroller: NSScroller {
     override class func scrollerWidth(for controlSize: ControlSize, scrollerStyle: Style) -> CGFloat {
-        return 5
+        return 4
     }
 
     override func drawKnob() {
         var knobRect = rect(for: .knob)
         knobRect = NSRect(
-            x: bounds.width - 4,
+            x: bounds.width - 3,
             y: knobRect.origin.y + 2,
-            width: 3,
+            width: 2,
             height: max(knobRect.height - 4, 8)
         )
-        let path = NSBezierPath(roundedRect: knobRect, xRadius: 1.5, yRadius: 1.5)
+        let path = NSBezierPath(roundedRect: knobRect, xRadius: 1, yRadius: 1)
         NSColor.white.withAlphaComponent(0.2).setFill()
         path.fill()
     }
@@ -1845,8 +3494,13 @@ struct ScrollbarStyler: NSViewRepresentable {
                     scrollView.scrollerStyle = .overlay
                     scrollView.hasVerticalScroller = true
                     scrollView.autohidesScrollers = true
+                    scrollView.drawsBackground = false
+                    scrollView.backgroundColor = .clear
+                    scrollView.borderType = .noBorder
+                    scrollView.contentView.drawsBackground = false
                     let scroller = ThinScroller()
                     scroller.controlSize = .mini
+                    scroller.scrollerStyle = .overlay
                     scrollView.verticalScroller = scroller
                     break
                 }
@@ -1863,6 +3517,9 @@ struct ScrollbarStyler: NSViewRepresentable {
 struct VisualEffectView: NSViewRepresentable {
     let material: NSVisualEffectView.Material
     let blendingMode: NSVisualEffectView.BlendingMode
+    var blurAlpha: CGFloat = 1.0
+    var fillOpacity: CGFloat = 0.5
+    var tintColor: NSColor? = nil
 
     func makeNSView(context: Context) -> NSVisualEffectView {
         let view = NSVisualEffectView()
@@ -1870,12 +3527,52 @@ struct VisualEffectView: NSViewRepresentable {
         view.blendingMode = blendingMode
         view.state = .active
         view.appearance = NSAppearance(named: .darkAqua)
+        view.wantsLayer = true
+        // Defer so internal sublayers are created
+        DispatchQueue.main.async { self.configureLayers(view) }
         return view
     }
 
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
         nsView.material = material
         nsView.blendingMode = blendingMode
+        configureLayers(nsView)
+    }
+
+    private func configureLayers(_ view: NSVisualEffectView) {
+        guard let layer = view.layer else { return }
+
+        // Adjust the internal "fill" layer opacity — this controls
+        // how opaque the dark material is, independent of blur
+        func findLayer(_ name: String, in root: CALayer) -> CALayer? {
+            if root.name == name { return root }
+            for sub in root.sublayers ?? [] {
+                if let found = findLayer(name, in: sub) { return found }
+            }
+            return nil
+        }
+
+        if let backdrop = findLayer("backdrop", in: layer) {
+            backdrop.opacity = Float(blurAlpha)
+        }
+        if let fill = findLayer("fill", in: layer) {
+            fill.opacity = Float(fillOpacity)
+        }
+        if let tone = findLayer("tone", in: layer) {
+            tone.opacity = Float(fillOpacity)
+        }
+
+        // Apply custom tint
+        layer.sublayers?.filter { $0.name == "customTint" }.forEach { $0.removeFromSuperlayer() }
+        if let tint = tintColor {
+            let tintLayer = CALayer()
+            tintLayer.name = "customTint"
+            tintLayer.frame = view.bounds
+            tintLayer.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+            tintLayer.backgroundColor = tint.cgColor
+            tintLayer.compositingFilter = "softLight"
+            layer.addSublayer(tintLayer)
+        }
     }
 }
 
@@ -1929,11 +3626,10 @@ class ClickHostingView<Content: View>: NSHostingView<Content> {
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        // Ensure no default background peeks through rounded corners
+        // Ensure no default background peeks through rounded corners.
+        // Corner radius is set externally via updateCornerRadius() to match the active skin.
         wantsLayer = true
         layer?.backgroundColor = .clear
-        layer?.cornerRadius = 12
-        layer?.masksToBounds = true
     }
 }
 
@@ -1959,6 +3655,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let configManager = ConfigManager()
     var usageFetcher: UsageFetcher!
     var sizeObserver: AnyCancellable?
+    var skinObserver: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -1978,6 +3675,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         hostingView.layer?.backgroundColor = .clear
 
         panel.contentView = hostingView
+
+        // Update corner radius + panel appearance when skin changes
+        updateCornerRadius()
+        updatePanelAppearance()
+        skinObserver = configManager.$currentSkin
+            .sink { [weak self] _ in
+                self?.updateCornerRadius()
+                self?.updatePanelAppearance()
+            }
 
         panel.restorePosition()
         panel.orderFrontRegardless()
@@ -2026,6 +3732,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
             panel.orderFrontRegardless()
+        }
+    }
+
+    private func updateCornerRadius() {
+        guard let hostingView = panel?.contentView else { return }
+        hostingView.layer?.cornerRadius = configManager.currentSkin.cornerRadius
+        hostingView.layer?.cornerCurve = .continuous
+        hostingView.layer?.masksToBounds = true
+    }
+
+    private func updatePanelAppearance() {
+        guard let panel = panel else { return }
+        // Glass: lock to dark so the .hudWindow material always renders as a
+        // dark frosted pane (matches Dock / Control Center) regardless of
+        // wallpaper brightness, keeping the hardcoded white text legible.
+        // Other skins: clear so they follow system appearance.
+        if configManager.currentSkin.id == "glass" {
+            panel.appearance = NSAppearance(named: .darkAqua)
+        } else {
+            panel.appearance = nil
         }
     }
 }

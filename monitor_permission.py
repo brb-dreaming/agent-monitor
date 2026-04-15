@@ -9,9 +9,11 @@ import json
 import socket
 import sys
 import os
+import re
 
-SOCKET_PATH = "/tmp/claude-monitor.sock"
+SOCKET_PATH = os.path.expanduser("~/.claude/monitor/monitor.sock")
 TIMEOUT_SECONDS = 300  # 5 min max wait for user response
+SESSION_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 
 def main():
     input_data = json.loads(sys.stdin.read())
@@ -19,6 +21,9 @@ def main():
     tool_name = input_data.get("tool_name", "")
     tool_input = input_data.get("tool_input", {})
     session_id = input_data.get("session_id", "")
+
+    if not SESSION_ID_RE.fullmatch(session_id):
+        sys.exit(0)
 
     # Build display text
     if tool_name == "Bash":

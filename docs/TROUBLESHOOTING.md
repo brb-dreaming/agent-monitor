@@ -47,7 +47,7 @@ Check these in order:
    ```
    You should hear "tmp done" (or see an error).
 
-5. **ElevenLabs fallback** — if the ElevenLabs API call fails (bad key, network issue), the hook automatically falls back to macOS `say`. If you hear Samantha instead of your ElevenLabs voice, check your API key.
+5. **ElevenLabs fallback** — if the ElevenLabs API call fails (bad key, network issue), the hook automatically falls back to macOS `say`. If you hear your macOS voice instead of your ElevenLabs voice, check your API key.
 
 ## Voice picker shows no voices
 
@@ -124,9 +124,9 @@ Also verify `monitor_permission.py` exists at `~/.claude/hooks/monitor_permissio
 
 ## Permission buttons appear but clicking Allow doesn't work
 
-The monitor app communicates with the Python hook via a Unix socket at `/tmp/claude-monitor.sock`. Check:
+The monitor app communicates with the Python hook via a Unix socket at `~/.claude/monitor/monitor.sock`. Check:
 
-1. **Socket exists** — `ls -la /tmp/claude-monitor.sock` (created when the monitor app launches)
+1. **Socket exists** — `ls -la ~/.claude/monitor/monitor.sock` (created when the monitor app launches)
 2. **Monitor app is running** — `pgrep -l claude_monitor`
 3. **Restart the app** — `pkill -9 claude_monitor && ~/.claude/monitor/build.sh`
 

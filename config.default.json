@@ -4,9 +4,7 @@
     "env_file": "~/.env",
     "model": "eleven_multilingual_v2",
     "stability": 0.5,
-    "similarity_boost": 0.75,
-    "voice_design_prompt": "Soft, androgynous male voice with a clear synthetic quality. Mid-high register, slightly compressed and even-toned, like speech generated inside a small electronic device. Warm but distinctly artificial. There's a digital texture to the voice, a subtle uniformity in how syllables are delivered. Pacing is measured and slightly mechanical, with deliberate pauses between phrases that feel like processing rather than breathing. Pitch stays in a narrow, pleasant range — no dramatic rises or falls. Despite the robotic cadence, the voice carries quiet sincerity and curiosity. It sounds like a machine that genuinely cares. Consonants are crisp and precise, vowels are slightly flattened. No breathiness, no vocal fry, no attempt to sound human. The warmth comes from the words and intention, not the vocal quality itself.",
-    "voice_design_name": "claude-monitor"
+    "similarity_boost": 0.75
   },
   "say": {
     "voice": "Zoe (Premium)",
@@ -20,7 +18,16 @@
     "volume": 0.5
   },
   "usage": {
-    "enabled": true
+    "enabled": false
+  },
+  "skin": "glass",
+  "glass": {
+    "blur": 1.0,
+    "opacity": 0.5,
+    "tintR": 0.5,
+    "tintG": 0.5,
+    "tintB": 0.5,
+    "tintStrength": 0.0
   },
   "voices": []
 }

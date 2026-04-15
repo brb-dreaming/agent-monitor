@@ -27,10 +27,31 @@ if [ -z "$SESSION_ID" ]; then
     exit 0
 fi
 
+if ! [[ "$SESSION_ID" =~ ^[A-Za-z0-9_-]+$ ]]; then
+    exit 0
+fi
+
 SESSION_FILE="$SESSIONS_DIR/${SESSION_ID}.json"
 PROJECT=$(basename "${CWD:-unknown}")
 PROJECT_NAME=$(echo "$PROJECT" | sed 's/[-_]/ /g')
-NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+NOW=$(python3 - <<'PY'
+from datetime import datetime, timezone
+print(datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z"))
+PY
+)
+AGENT="${CLAUDE_MONITOR_AGENT:-}"
+if [ -z "$AGENT" ] && [ -f "$SESSION_FILE" ]; then
+    AGENT=$(jq -r '.agent // empty' "$SESSION_FILE" 2>/dev/null || true)
+fi
+case "$(printf '%s' "$AGENT" | tr '[:upper:]' '[:lower:]')" in
+    codex) AGENT="codex" ;;
+    *)     AGENT="claude" ;;
+esac
+THREAD_ID="${CLAUDE_MONITOR_THREAD_ID:-}"
+if [ -n "$THREAD_ID" ] && ! [[ "$THREAD_ID" =~ ^[A-Za-z0-9_-]+$ ]]; then
+    THREAD_ID=""
+fi
+AUTOCLEAN_DONE="${CLAUDE_MONITOR_AUTOCLEAN_DONE:-0}"
 
 # --- Detect terminal + session ID for click-to-switch ---
 detect_terminal() {
@@ -39,6 +60,11 @@ detect_terminal() {
 
     if [ -n "${ITERM_SESSION_ID:-}" ]; then
         echo "iterm2|$ITERM_SESSION_ID"
+        return
+    fi
+
+    if [ -n "${WEZTERM_PANE:-}" ]; then
+        echo "wezterm|$WEZTERM_PANE"
         return
     fi
 
@@ -59,10 +85,27 @@ detect_terminal() {
     echo "$term_app|$term_session_id"
 }
 
+play_say_with_volume() {
+    local msg="$1"
+    local voice="$2"
+    local rate="$3"
+    local volume="$4"
+
+    (
+        local temp_audio
+        temp_audio=$(mktemp -t claude_monitor_say) || exit 1
+        if say -v "$voice" -r "$rate" -o "$temp_audio" -- "$msg"; then
+            afplay -v "$volume" "$temp_audio"
+        fi
+        rm -f "$temp_audio"
+    ) &
+    disown 2>/dev/null
+}
+
 # --- TTS announcement ---
 announce() {
     local msg="$1"
-    local provider voice rate
+    local provider voice rate volume
 
     # Read config
     if [ ! -f "$CONFIG_FILE" ]; then
@@ -70,8 +113,10 @@ announce() {
     fi
 
     provider=$(jq -r '.tts_provider // "say"' "$CONFIG_FILE")
-    local volume
     volume=$(jq -r '.announce.volume // 0.5' "$CONFIG_FILE")
+    # Read say config upfront so all fallback paths can use it
+    voice=$(jq -r '.say.voice // "Samantha"' "$CONFIG_FILE")
+    rate=$(jq -r '.say.rate // 200' "$CONFIG_FILE")
 
     if [ "$provider" = "cache" ]; then
         "$HOME/.claude/hooks/voice-cache.sh" "$msg" "$volume" &
@@ -97,14 +142,12 @@ announce() {
         if [ -n "${ELEVENLABS_API_KEY:-}" ] && [ -n "${ELEVENLABS_VOICE_ID:-}" ]; then
             local temp_audio="/tmp/claude_monitor_tts_$$.mp3"
             local json_payload
-            json_payload=$(python3 -c "
-import json, sys
-print(json.dumps({
-    'text': sys.argv[1],
-    'model_id': sys.argv[2],
-    'voice_settings': {'stability': float(sys.argv[3]), 'similarity_boost': float(sys.argv[4])}
-}))
-" "$msg" "$model" "$stability" "$similarity")
+            json_payload=$(jq -n \
+                --arg text "$msg" \
+                --arg model "$model" \
+                --argjson stability "$stability" \
+                --argjson similarity "$similarity" \
+                '{text:$text,model_id:$model,voice_settings:{stability:$stability,similarity_boost:$similarity}}')
 
             local http_code
             http_code=$(curl -s -w '%{http_code}' -X POST \
@@ -121,20 +164,30 @@ print(json.dumps({
                 disown 2>/dev/null
             else
                 rm -f "$temp_audio"
-                say -v "Samantha" -r 200 "$msg" &
-                disown 2>/dev/null
+                play_say_with_volume "$msg" "$voice" "$rate" "$volume"
             fi
         else
-            say -v "Samantha" -r 200 "$msg" &
-            disown 2>/dev/null
+            play_say_with_volume "$msg" "$voice" "$rate" "$volume"
         fi
     else
-        voice=$(jq -r '.say.voice // "Samantha"' "$CONFIG_FILE")
-        rate=$(jq -r '.say.rate // 200' "$CONFIG_FILE")
-        # osascript say supports volume 0.0-1.0
-        osascript -e "say \"${msg}\" using \"${voice}\" speaking rate ${rate} volume ${volume}" &
-        disown 2>/dev/null
+        play_say_with_volume "$msg" "$voice" "$rate" "$volume"
     fi
+}
+
+announcement_text() {
+    local event_type="$1"
+    local project_label="$PROJECT_NAME"
+
+    if [ "$AGENT" = "codex" ]; then
+        project_label="$project_label codex"
+    fi
+
+    case "$event_type" in
+        done)      echo "$project_label done" ;;
+        attention) echo "$project_label needs attention" ;;
+        start)     echo "$project_label starting" ;;
+        *)         return 1 ;;
+    esac
 }
 
 # --- Should we announce this event? ---
@@ -168,8 +221,37 @@ update_session() {
         --arg updated "$NOW" \
         --arg terminal "$TERM_APP" \
         --arg term_sid "$TERM_SID" \
-        '.status = $status | .updated_at = $updated | if .terminal == "" then .terminal = $terminal | .terminal_session_id = $term_sid else . end' \
+        --arg agent "$AGENT" \
+        --arg thread_id "$THREAD_ID" \
+        '.status = $status
+        | .updated_at = $updated
+        | if (.agent // "") == "" then .agent = $agent else . end
+        | if $thread_id != "" and (.thread_id // "") == "" then .thread_id = $thread_id else . end
+        | if .terminal == "" or ($terminal != "" and .terminal != $terminal) then .terminal = $terminal | .terminal_session_id = $term_sid else . end' \
         "$SESSION_FILE" > "${SESSION_FILE}.tmp" && mv "${SESSION_FILE}.tmp" "$SESSION_FILE"
+}
+
+schedule_session_removal() {
+    local session_file="$1"
+    local session_id="$2"
+    local done_updated_at="$3"
+    local permission_file="$SESSIONS_DIR/${session_id}.permission"
+
+    python3 - "$session_file" "$done_updated_at" "$permission_file" <<'PY'
+import subprocess
+import sys
+from pathlib import Path
+
+cleanup_script = Path.home() / ".claude" / "hooks" / "session_cleanup.py"
+subprocess.Popen(
+    ["python3", str(cleanup_script), sys.argv[1], sys.argv[2], sys.argv[3]],
+    stdin=subprocess.DEVNULL,
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.DEVNULL,
+    start_new_session=True,
+    close_fds=True,
+)
+PY
 }
 
 # Helper: create new session file
@@ -178,6 +260,8 @@ create_session() {
     local prompt="${2:-}"
     jq -n \
         --arg sid "$SESSION_ID" \
+        --arg agent "$AGENT" \
+        --arg thread_id "$THREAD_ID" \
         --arg status "$new_status" \
         --arg project "$PROJECT" \
         --arg cwd "${CWD:-}" \
@@ -186,8 +270,39 @@ create_session() {
         --arg started "$NOW" \
         --arg updated "$NOW" \
         --arg prompt "$prompt" \
-        '{session_id:$sid,status:$status,project:$project,cwd:$cwd,terminal:$terminal,terminal_session_id:$term_sid,started_at:$started,updated_at:$updated,last_prompt:$prompt}' \
+        '{
+            session_id:$sid,
+            agent:$agent,
+            status:$status,
+            project:$project,
+            cwd:$cwd,
+            terminal:$terminal,
+            terminal_session_id:$term_sid,
+            started_at:$started,
+            updated_at:$updated,
+            last_prompt:$prompt
+        } + (if $thread_id != "" then {thread_id:$thread_id} else {} end)' \
         > "${SESSION_FILE}.tmp" && mv "${SESSION_FILE}.tmp" "$SESSION_FILE"
+
+    # Clean up any discovered-*.json for the same terminal session (discovery→hook handoff)
+    # Handles format differences: iTerm2 discovery stores "GUID", hooks store "w0t0p0:GUID"
+    if [ -n "$TERM_SID" ]; then
+        for df in "$SESSIONS_DIR"/discovered-*.json; do
+            [ -f "$df" ] || continue
+            local df_sid df_terminal hook_guid
+            df_sid=$(jq -r '.terminal_session_id // ""' "$df" 2>/dev/null)
+            df_terminal=$(jq -r '.terminal // ""' "$df" 2>/dev/null)
+            [ -z "$df_sid" ] && continue
+            if [ "$TERM_APP" = "iterm2" ]; then
+                hook_guid="${TERM_SID##*:}"
+                if [ "$df_terminal" = "iterm2" ] && { [ "$df_sid" = "$TERM_SID" ] || [ "$df_sid" = "$hook_guid" ]; }; then
+                    rm -f "$df"
+                fi
+            elif [ "$df_terminal" = "$TERM_APP" ] && [ "$df_sid" = "$TERM_SID" ]; then
+                rm -f "$df"
+            fi
+        done
+    fi
 }
 
 # --- Handle events ---
@@ -195,7 +310,7 @@ case "$EVENT" in
     SessionStart)
         create_session "starting"
         if should_announce start; then
-            announce "$PROJECT_NAME starting" &
+            announce "$(announcement_text start)"
         fi
         ;;
 
@@ -209,7 +324,14 @@ case "$EVENT" in
                 --arg prompt "$PROMPT_TEXT" \
                 --arg terminal "$TERM_APP" \
                 --arg term_sid "$TERM_SID" \
-                '.status = $status | .updated_at = $updated | .last_prompt = $prompt | if .terminal == "" then .terminal = $terminal | .terminal_session_id = $term_sid else . end' \
+                --arg agent "$AGENT" \
+                --arg thread_id "$THREAD_ID" \
+                '.status = $status
+                | .updated_at = $updated
+                | .last_prompt = $prompt
+                | if (.agent // "") == "" then .agent = $agent else . end
+                | if $thread_id != "" and (.thread_id // "") == "" then .thread_id = $thread_id else . end
+                | if .terminal == "" or ($terminal != "" and .terminal != $terminal) then .terminal = $terminal | .terminal_session_id = $term_sid else . end' \
                 "$SESSION_FILE" > "${SESSION_FILE}.tmp" && mv "${SESSION_FILE}.tmp" "$SESSION_FILE"
         else
             create_session "working" "$PROMPT_TEXT"
@@ -217,27 +339,17 @@ case "$EVENT" in
         ;;
 
     Stop)
+        should_schedule_removal="$AUTOCLEAN_DONE"
         if [ -f "$SESSION_FILE" ]; then
             update_session "done"
         else
             create_session "done"
         fi
-        # In convo mode, say "Claude replied" instead of project name
-        if [ -f /tmp/claude-convo-active.json ]; then
-            CONVO_SID=$(python3 -c "import json; print(json.load(open('/tmp/claude-convo-active.json')).get('session_id',''))" 2>/dev/null)
-            if [ "$CONVO_SID" = "$SESSION_ID" ]; then
-                if should_announce done; then
-                    announce "Claude replied" &
-                fi
-            else
-                if should_announce done; then
-                    announce "$PROJECT_NAME done" &
-                fi
-            fi
-        else
-            if should_announce done; then
-                announce "$PROJECT_NAME done" &
-            fi
+        if should_announce done; then
+            announce "$(announcement_text done)"
+        fi
+        if [ "$should_schedule_removal" = "1" ]; then
+            schedule_session_removal "$SESSION_FILE" "$SESSION_ID" "$NOW"
         fi
         ;;
 
@@ -250,14 +362,15 @@ case "$EVENT" in
         # Only announce if PermissionRequest isn't actively handling this
         PERM_FILE="$SESSIONS_DIR/${SESSION_ID}.permission"
         if [ ! -f "$PERM_FILE" ] && should_announce attention; then
-            announce "$PROJECT_NAME needs attention" &
+            announce "$(announcement_text attention)"
         fi
         ;;
 
     SessionEnd)
-        # Remove session file after short delay so UI can show "done" briefly
-        (sleep 5 && rm -f "$SESSION_FILE") &
-        disown 2>/dev/null
+        if [ -f "$SESSION_FILE" ]; then
+            update_session "done"
+            schedule_session_removal "$SESSION_FILE" "$SESSION_ID" "$NOW"
+        fi
         ;;
 esac
 
