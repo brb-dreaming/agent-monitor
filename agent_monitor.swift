@@ -9,8 +9,8 @@ final class AppInstanceLock {
         let baseDirectory = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? fileManager.temporaryDirectory
         return baseDirectory
-            .appendingPathComponent("ClaudeMonitor", isDirectory: true)
-            .appendingPathComponent("claude_monitor.lock").path
+            .appendingPathComponent("AgentMonitor", isDirectory: true)
+            .appendingPathComponent("agent_monitor.lock").path
     }()
     private var lockFd: Int32 = -1
 
@@ -20,7 +20,7 @@ final class AppInstanceLock {
 
         let fd = open(lockFilePath, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)
         guard fd >= 0 else {
-            NSLog("[ClaudeMonitor] Singleton: failed to open lock file")
+            NSLog("[AgentMonitor] Singleton: failed to open lock file")
             return true
         }
 
@@ -30,7 +30,7 @@ final class AppInstanceLock {
             if lockErrno == EWOULDBLOCK {
                 return false
             }
-            NSLog("[ClaudeMonitor] Singleton: flock failed: %d", lockErrno)
+            NSLog("[AgentMonitor] Singleton: flock failed: %d", lockErrno)
             return true
         }
 
@@ -696,7 +696,7 @@ class UsageFetcher: ObservableObject {
                         self.pollInterval = min(self.pollInterval * 2, self.maxPollInterval)
                         self.schedulePoll()
                         self.error = "Rate limited — backing off to \(Int(self.pollInterval / 60))m"
-                        NSLog("[ClaudeMonitor] Usage 429 — poll interval now %.0fs", self.pollInterval)
+                        NSLog("[AgentMonitor] Usage 429 — poll interval now %.0fs", self.pollInterval)
                         return
                     }
                     if httpResponse.statusCode == 401 {
@@ -723,7 +723,7 @@ class UsageFetcher: ObservableObject {
                     }
                 } catch {
                     self.error = "Parse error"
-                    NSLog("[ClaudeMonitor] Usage parse error: %@", error.localizedDescription)
+                    NSLog("[AgentMonitor] Usage parse error: %@", error.localizedDescription)
                 }
             }
         }.resume()
@@ -945,7 +945,7 @@ class PermissionSocketServer {
 
         serverFd = socket(AF_UNIX, SOCK_STREAM, 0)
         guard serverFd >= 0 else {
-            NSLog("[ClaudeMonitor] Socket: failed to create socket")
+            NSLog("[AgentMonitor] Socket: failed to create socket")
             return
         }
 
@@ -964,7 +964,7 @@ class PermissionSocketServer {
             }
         }
         guard bindResult == 0 else {
-            NSLog("[ClaudeMonitor] Socket: bind failed: %d", errno)
+            NSLog("[AgentMonitor] Socket: bind failed: %d", errno)
             Darwin.close(serverFd)
             return
         }
@@ -973,12 +973,12 @@ class PermissionSocketServer {
         chmod(socketPath, 0o600)
 
         guard listen(serverFd, 5) == 0 else {
-            NSLog("[ClaudeMonitor] Socket: listen failed")
+            NSLog("[AgentMonitor] Socket: listen failed")
             Darwin.close(serverFd)
             return
         }
 
-        NSLog("[ClaudeMonitor] Socket: listening on %@", socketPath)
+        NSLog("[AgentMonitor] Socket: listening on %@", socketPath)
 
         // Accept connections in background
         queue.async { [weak self] in
@@ -1022,7 +1022,7 @@ class PermissionSocketServer {
             return
         }
 
-        NSLog("[ClaudeMonitor] Socket: permission request from session %@", sessionId)
+        NSLog("[AgentMonitor] Socket: permission request from session %@", sessionId)
 
         // Store the client fd — keep the connection open until user responds
         lock.lock()
@@ -1038,7 +1038,7 @@ class PermissionSocketServer {
         lock.lock()
         guard let fd = pendingClients.removeValue(forKey: sessionId) else {
             lock.unlock()
-            NSLog("[ClaudeMonitor] Socket: no pending client for session %@", sessionId)
+            NSLog("[AgentMonitor] Socket: no pending client for session %@", sessionId)
             return
         }
         lock.unlock()
@@ -1049,7 +1049,7 @@ class PermissionSocketServer {
             _ = write(fd, ptr.baseAddress!, ptr.count)
         }
         Darwin.close(fd)
-        NSLog("[ClaudeMonitor] Socket: sent %@ to session %@", decision, sessionId)
+        NSLog("[AgentMonitor] Socket: sent %@ to session %@", decision, sessionId)
     }
 
     func stop() {
@@ -1256,7 +1256,7 @@ class SessionReader: ObservableObject {
                             try? FileManager.default.removeItem(atPath: path)
                             // Clean up orphaned permission files
                             try? FileManager.default.removeItem(atPath: "\(self.sessionsDir)/\(sid).permission")
-                            NSLog("[ClaudeMonitor] Pruned session %@ — TTY %@ gone", sid, tty)
+                            NSLog("[AgentMonitor] Pruned session %@ — TTY %@ gone", sid, tty)
                         }
                     }
                 }
@@ -1285,7 +1285,7 @@ class SessionReader: ObservableObject {
                                 let path = "\(self.sessionsDir)/\(sid).json"
                                 try? FileManager.default.removeItem(atPath: path)
                                 try? FileManager.default.removeItem(atPath: "\(self.sessionsDir)/\(sid).permission")
-                                NSLog("[ClaudeMonitor] Pruned session %@ — WezTerm pane %@ gone", sid, paneId)
+                                NSLog("[AgentMonitor] Pruned session %@ — WezTerm pane %@ gone", sid, paneId)
                             }
                         }
                     }
@@ -1328,7 +1328,7 @@ class SessionReader: ObservableObject {
                             let path = "\(self.sessionsDir)/\(sid).json"
                             try? FileManager.default.removeItem(atPath: path)
                             try? FileManager.default.removeItem(atPath: "\(self.sessionsDir)/\(sid).permission")
-                            NSLog("[ClaudeMonitor] Pruned session %@ — iTerm2 session %@ gone", sid, uniqueId)
+                            NSLog("[AgentMonitor] Pruned session %@ — iTerm2 session %@ gone", sid, uniqueId)
                         }
                     }
                 }
@@ -1368,7 +1368,7 @@ class SessionReader: ObservableObject {
                     let session = try JSONDecoder().decode(SessionInfo.self, from: data)
                     loaded.append(session)
                 } catch {
-                    NSLog("[ClaudeMonitor] Failed to decode %@: %@", file, error.localizedDescription)
+                    NSLog("[AgentMonitor] Failed to decode %@: %@", file, error.localizedDescription)
                 }
             } else if file.hasSuffix(".permission") {
                 let sessionId = String(file.dropLast(".permission".count))
@@ -1620,7 +1620,7 @@ class SessionReader: ObservableObject {
             let psTask = Process()
             let psPipe = Pipe()
             psTask.executableURL = URL(fileURLWithPath: "/bin/sh")
-            psTask.arguments = ["-c", "ps -eo pid=,tty=,comm= | awk '($3 == \"claude\" || $3 == \"codex\" || $3 ~ /\\/codex$/) && $3 !~ /claude_monitor$/ {print $1 \"\\t\" $2 \"\\t\" $3}'"]
+            psTask.arguments = ["-c", "ps -eo pid=,tty=,comm= | awk '($3 == \"claude\" || $3 == \"codex\" || $3 ~ /\\/codex$/) && $3 !~ /agent_monitor$/ {print $1 \"\\t\" $2 \"\\t\" $3}'"]
             psTask.standardOutput = psPipe
             psTask.standardError = FileHandle.nullDevice
             guard let _ = try? psTask.run() else { return }
@@ -1775,14 +1775,14 @@ class SessionReader: ObservableObject {
                     try jsonData.write(to: URL(fileURLWithPath: tmpFile))
                     try fm.moveItem(atPath: tmpFile, toPath: sessionFile)
                     created += 1
-                    NSLog("[ClaudeMonitor] Discovered %@ session: %@ (%@) on %@ %@", candidate.agent, project, sid, candidate.terminalType, candidate.terminalSessionId)
+                    NSLog("[AgentMonitor] Discovered %@ session: %@ (%@) on %@ %@", candidate.agent, project, sid, candidate.terminalType, candidate.terminalSessionId)
                 } catch {
                     try? fm.removeItem(atPath: tmpFile)
                 }
             }
 
             if created > 0 {
-                NSLog("[ClaudeMonitor] Discovery found %d new session(s)", created)
+                NSLog("[AgentMonitor] Discovery found %d new session(s)", created)
                 DispatchQueue.main.async {
                     self.readSessions()
                 }
@@ -2019,7 +2019,7 @@ func switchToResolvedTarget(_ target: TerminalTarget, cwd: String) {
 }
 
 func switchToSession(_ session: SessionInfo) {
-    NSLog("[ClaudeMonitor] switchToSession: terminal=\(session.terminal) tty=\(session.terminal_session_id) project=\(session.project)")
+    NSLog("[AgentMonitor] switchToSession: terminal=\(session.terminal) tty=\(session.terminal_session_id) project=\(session.project)")
     if session.agent == "codex",
        !session.thread_id.isEmpty,
        let liveTarget = resolveLiveCodexTarget(threadID: session.thread_id) {
@@ -2039,7 +2039,7 @@ func switchToSession(_ session: SessionInfo) {
         return
     }
 
-    NSLog("[ClaudeMonitor] falling back to cwd switch (no terminal info)")
+    NSLog("[AgentMonitor] falling back to cwd switch (no terminal info)")
     switchByTerminalCwd(cwd: session.cwd)
 }
 
@@ -2055,7 +2055,7 @@ func switchToITerm2(sessionId: String) {
     // Sanitize: iTerm2 unique IDs are UUIDs (hex + dashes)
     let sanitized = uniqueId.filter { $0.isHexDigit || $0 == "-" }
     guard sanitized == uniqueId else {
-        NSLog("[ClaudeMonitor] switchToITerm2: rejecting suspicious uniqueId: %@", uniqueId)
+        NSLog("[AgentMonitor] switchToITerm2: rejecting suspicious uniqueId: %@", uniqueId)
         return
     }
 
@@ -2096,7 +2096,7 @@ func switchToTerminal(ttyPath: String) {
     // Sanitize: TTY paths are /dev/ttysNNN
     let sanitized = ttyPath.filter { $0.isLetter || $0.isNumber || $0 == "/" }
     guard sanitized == ttyPath else {
-        NSLog("[ClaudeMonitor] switchToTerminal: rejecting suspicious ttyPath: %@", ttyPath)
+        NSLog("[AgentMonitor] switchToTerminal: rejecting suspicious ttyPath: %@", ttyPath)
         return
     }
 
@@ -2193,7 +2193,7 @@ func killSession(_ session: SessionInfo) {
         // Sanitize: TTY names are alphanumeric (e.g., "ttys017")
         let sanitized = tty.filter { $0.isLetter || $0.isNumber }
         guard sanitized == tty else {
-            NSLog("[ClaudeMonitor] killSession: rejecting suspicious tty: %@", tty)
+            NSLog("[AgentMonitor] killSession: rejecting suspicious tty: %@", tty)
             return
         }
         let processPattern = session.agent == "codex" ? "codex" : "claude"
@@ -3165,12 +3165,10 @@ struct HeaderBar: View {
                         .font(.system(size: 8, weight: .semibold))
                         .foregroundColor(skin.colors.chevron)
                         .frame(width: 10)
-                    Image(systemName: "terminal.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(skin.colors.headerIcon)
-                    Text("Claude")
+                    Text("Agent Monitor")
                         .font(.system(size: 11, weight: .semibold, design: skin.headerFontDesign))
                         .foregroundColor(skin.colors.headerText)
+                        .opacity(0.65)
                 }
                 .contentShape(Rectangle())
             }
@@ -3740,7 +3738,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard instanceLock.acquire() else {
-            NSLog("[ClaudeMonitor] Singleton: another instance is already running")
+            NSLog("[AgentMonitor] Singleton: another instance is already running")
             NSApp.terminate(nil)
             return
         }
@@ -3850,8 +3848,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 // MARK: - Main Entry Point
 
 @main
-struct ClaudeMonitorApp {
+struct AgentMonitorApp {
+    static func migrateUserDefaultsFromClaudeMonitor() {
+        let defaults = UserDefaults.standard
+        if defaults.bool(forKey: "__migratedFromClaudeMonitor") { return }
+
+        let oldPlistPath = NSHomeDirectory() + "/Library/Preferences/claude_monitor.plist"
+        guard FileManager.default.fileExists(atPath: oldPlistPath),
+              let oldDict = NSDictionary(contentsOfFile: oldPlistPath) as? [String: Any] else {
+            defaults.set(true, forKey: "__migratedFromClaudeMonitor")
+            return
+        }
+
+        var migratedCount = 0
+        for (key, value) in oldDict where defaults.object(forKey: key) == nil {
+            defaults.set(value, forKey: key)
+            migratedCount += 1
+        }
+
+        if migratedCount > 0 {
+            NSLog("[AgentMonitor] Migrated %d key(s) from claude_monitor.plist", migratedCount)
+        }
+        defaults.set(true, forKey: "__migratedFromClaudeMonitor")
+        try? FileManager.default.removeItem(atPath: oldPlistPath)
+    }
+
     static func main() {
+        migrateUserDefaultsFromClaudeMonitor()
         let app = NSApplication.shared
         let delegate = AppDelegate()
         app.delegate = delegate

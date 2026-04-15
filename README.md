@@ -1,6 +1,6 @@
 <div align="center">
 
-# Claude Monitor
+# Agent Monitor
 
 **Control all your Claude Code and Codex sessions from one floating panel.**
 
@@ -8,7 +8,7 @@ Grant permissions without switching windows. Hear when Claude finishes or needs 
 
 <br>
 
-<img src="assets/demo.gif" width="380" alt="Claude Monitor demo" />
+<img src="assets/demo.gif" width="380" alt="Agent Monitor demo" />
 
 <br>
 <br>
@@ -47,21 +47,21 @@ Session tracking, voice announcements, and permission granting work in **any ter
 | Terminal.app | yes | yes | Via AppleScript |
 | iTerm2 | yes | yes | Via AppleScript + unique session ID |
 | WezTerm | yes | yes | Via `wezterm cli` |
-| Ghostty, Warp, kitty, Alacritty | -- | -- | Sessions appear but no click-to-switch. PRs welcome! |
-| VS Code / Cursor terminal | -- | -- | Sessions appear but no click-to-switch. PRs welcome! |
+| Ghostty, Warp, kitty, Alacritty | -- | -- | Sessions appear but no click-to-switch |
+| VS Code / Cursor terminal | -- | -- | Sessions appear but no click-to-switch |
 
 ## Install
 
 ### Quick start (recommended)
 
 ```bash
-git clone https://github.com/brb-dreaming/claude-monitor.git ~/.claude/monitor
+git clone https://github.com/brb-dreaming/agent-monitor.git ~/.claude/monitor
 ~/.claude/monitor/build.sh
 ```
 
 Then tell Claude Code:
 
-> Set up Claude Monitor from ~/.claude/monitor. Follow the CLAUDE.md instructions.
+> Set up Agent Monitor from ~/.claude/monitor. Follow the CLAUDE.md instructions.
 
 Claude will configure hooks, ask about your voice preferences, and get everything wired up.
 
@@ -82,7 +82,7 @@ brew install jq           # JSON processor (used by the hook script)
 #### 2. Clone and build
 
 ```bash
-git clone https://github.com/brb-dreaming/claude-monitor.git ~/.claude/monitor
+git clone https://github.com/brb-dreaming/agent-monitor.git ~/.claude/monitor
 ~/.claude/monitor/build.sh
 ```
 
@@ -241,12 +241,10 @@ For ElevenLabs setup, phrase tuning, cache management, and choosing a `voice_id`
 
 4 built-in themes, switchable from the settings popover:
 
-| Skin | Style | Background |
-|------|-------|------------|
-| **Glass** (default) | Pure frosted glass, white text, colored dots only | Transparent with background blur |
-| **Obsidian** | Dark neumorphic, carved-from-shadow depth | Solid dark gradient |
-| **Terminal** | Refined green-phosphor terminal, monospaced | Near-black with green tint |
-| **Teletype** | Warm paper terminal with ink-and-ribbon accents | Opaque cream paper with subtle texture |
+- **Glass** (default) — pure frosted glass, white text, colored dots only, transparent with background blur
+- **Obsidian** — dark neumorphic, carved-from-shadow depth, solid dark gradient
+- **Terminal** — refined green-phosphor terminal, monospaced, near-black with green tint
+- **Teletype** — warm paper terminal with ink-and-ribbon accents, opaque cream paper with subtle texture
 
 Set `"skin"` in `config.json` or use the picker in the settings popover. See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) for details.
 
@@ -349,13 +347,13 @@ See [Troubleshooting Guide](docs/TROUBLESHOOTING.md) for detailed solutions. Qui
 |---------|-----|
 | Sessions don't appear | Send a new prompt in that session to trigger the hook |
 | Permission buttons missing | Verify `PermissionRequest` hook is in `settings.json` and `monitor_permission.py` exists |
-| Allow clicked, nothing happens | Restart the monitor: `pkill -9 claude_monitor && ~/.claude/monitor/build.sh` |
+| Allow clicked, nothing happens | Restart the monitor: `pkill -9 agent_monitor && ~/.claude/monitor/build.sh` |
 | Click doesn't switch tabs | Check that `terminal_session_id` is set in the session JSON |
 | No voice | Verify `announce.enabled` is `true` and `volume` > `0` |
 | Wrong voice | Run `say -v '?'` to find the exact voice name, update `say.voice` |
 | ElevenLabs mode is silent | Verify `tts_provider`, `elevenlabs.env_file`, and `elevenlabs.voice_id` are all set correctly |
-| Panel gone | `pkill -9 claude_monitor && ~/.claude/monitor/build.sh` |
-| Wrong position | `defaults delete claude_monitor monitorX && defaults delete claude_monitor monitorY` then rebuild |
+| Panel gone | `pkill -9 agent_monitor && ~/.claude/monitor/build.sh` |
+| Wrong position | `defaults delete agent_monitor monitorX && defaults delete agent_monitor monitorY` then rebuild |
 | Usage shows "No credentials" | Log in to Claude Code via OAuth (`claude login`). Or disable usage tracking in settings |
 | Usage shows "Auth expired" | Re-authenticate with `claude login` |
 | Usage shows "Rate limited" | Normal -- the app backs off automatically and retries |
@@ -364,7 +362,7 @@ See [Troubleshooting Guide](docs/TROUBLESHOOTING.md) for detailed solutions. Qui
 ## Uninstall
 
 ```bash
-pkill claude_monitor
+pkill agent_monitor
 rm -rf ~/.claude/monitor
 rm -f ~/.claude/hooks/monitor.sh ~/.claude/hooks/monitor_permission.py ~/.claude/hooks/voice-cache.sh
 rm -rf ~/.claude/voice-cache
@@ -377,8 +375,8 @@ Then remove the 6 hook entries (`SessionStart`, `UserPromptSubmit`, `Stop`, `Not
 ```
 ~/.claude/
 ├── monitor/
-│   ├── claude_monitor.swift    # SwiftUI floating panel (single-file app)
-│   ├── claude_monitor          # Compiled binary (after build, gitignored)
+│   ├── agent_monitor.swift    # SwiftUI floating panel (single-file app)
+│   ├── agent_monitor          # Compiled binary (after build, gitignored)
 │   ├── build.sh               # Compile + launch script
 │   ├── config.default.json    # Default config template (tracked in git)
 │   ├── config.json            # Your live config (gitignored, created on first build)

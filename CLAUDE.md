@@ -1,10 +1,10 @@
-# Claude Monitor
+# Agent Monitor
 
 A floating macOS dashboard for Claude Code sessions with voice announcements, permission granting, and usage tracking.
 
 ## Project structure
 
-- `claude_monitor.swift` — single-file SwiftUI app (floating panel)
+- `agent_monitor.swift` — single-file SwiftUI app (floating panel)
 - `build.sh` — compile, sync hooks, create config, launch
 - `monitor.sh` — lifecycle hook script (SessionStart/Stop/etc + TTS)
 - `monitor_permission.py` — permission granting via Unix socket IPC
@@ -25,7 +25,7 @@ Three built-in skins, selectable from the settings popover:
 
 ## Installation guidance
 
-When a user asks you to install Claude Monitor, **ask them about their voice preferences before creating the config**. Walk them through these choices:
+When a user asks you to install Agent Monitor, **ask them about their voice preferences before creating the config**. Walk them through these choices:
 
 ### Voice provider (`tts_provider`)
 
@@ -63,7 +63,7 @@ Ask if they want to see their Claude Code quota (session + weekly) in the monito
 
 Kill + restart:
 ```bash
-pkill -9 claude_monitor; sleep 1; ~/.claude/monitor/build.sh
+pkill -9 agent_monitor; sleep 1; ~/.claude/monitor/build.sh
 ```
 
 ## Hook architecture

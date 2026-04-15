@@ -1,7 +1,7 @@
 #!/bin/bash
 # ~/.claude/hooks/monitor.sh
-# Claude Code lifecycle hook — writes session JSON + triggers TTS
-# Called by all 5 hook events: SessionStart, UserPromptSubmit, Stop, Notification, SessionEnd
+# Agent Monitor lifecycle hook — writes session JSON + triggers TTS
+# Called by all 5 Claude Code hook events (and Codex via codex-monitor): SessionStart, UserPromptSubmit, Stop, Notification, SessionEnd
 #
 # Usage: monitor.sh <event>
 # Receives hook JSON on stdin
@@ -39,7 +39,7 @@ from datetime import datetime, timezone
 print(datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z"))
 PY
 )
-AGENT="${CLAUDE_MONITOR_AGENT:-}"
+AGENT="${AGENT_MONITOR_AGENT:-${CLAUDE_MONITOR_AGENT:-}}"
 if [ -z "$AGENT" ] && [ -f "$SESSION_FILE" ]; then
     AGENT=$(jq -r '.agent // empty' "$SESSION_FILE" 2>/dev/null || true)
 fi
@@ -47,11 +47,11 @@ case "$(printf '%s' "$AGENT" | tr '[:upper:]' '[:lower:]')" in
     codex) AGENT="codex" ;;
     *)     AGENT="claude" ;;
 esac
-THREAD_ID="${CLAUDE_MONITOR_THREAD_ID:-}"
+THREAD_ID="${AGENT_MONITOR_THREAD_ID:-${CLAUDE_MONITOR_THREAD_ID:-}}"
 if [ -n "$THREAD_ID" ] && ! [[ "$THREAD_ID" =~ ^[A-Za-z0-9_-]+$ ]]; then
     THREAD_ID=""
 fi
-AUTOCLEAN_DONE="${CLAUDE_MONITOR_AUTOCLEAN_DONE:-0}"
+AUTOCLEAN_DONE="${AGENT_MONITOR_AUTOCLEAN_DONE:-${CLAUDE_MONITOR_AUTOCLEAN_DONE:-0}}"
 
 # --- Detect terminal + session ID for click-to-switch ---
 detect_terminal() {
@@ -86,9 +86,9 @@ detect_terminal() {
 }
 
 ensure_monitor_running() {
-    local binary="$MONITOR_DIR/claude_monitor"
+    local binary="$MONITOR_DIR/agent_monitor"
     [ -x "$binary" ] || return 0
-    pgrep -f "/\.claude/monitor/claude_monitor\$" >/dev/null 2>&1 && return 0
+    pgrep -f "/\.claude/monitor/agent_monitor\$" >/dev/null 2>&1 && return 0
 
     local lockdir="$MONITOR_DIR/.relaunch.lock"
     # Clear stale lock (>10s old) left behind by a crashed relauncher
@@ -117,7 +117,7 @@ play_say_with_volume() {
 
     (
         local temp_audio
-        temp_audio=$(mktemp -t claude_monitor_say) || exit 1
+        temp_audio=$(mktemp -t agent_monitor_say) || exit 1
         if say -v "$voice" -r "$rate" -o "$temp_audio" -- "$msg"; then
             afplay -v "$volume" "$temp_audio"
         fi
@@ -164,7 +164,7 @@ announce() {
         fi
 
         if [ -n "${ELEVENLABS_API_KEY:-}" ] && [ -n "${ELEVENLABS_VOICE_ID:-}" ]; then
-            local temp_audio="/tmp/claude_monitor_tts_$$.mp3"
+            local temp_audio="/tmp/agent_monitor_tts_$$.mp3"
             local json_payload
             json_payload=$(jq -n \
                 --arg text "$msg" \

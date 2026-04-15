@@ -62,12 +62,12 @@ If the list is empty:
 
 Check if it's running:
 ```bash
-pgrep -l claude_monitor
+pgrep -l agent_monitor
 ```
 
 Kill and rebuild:
 ```bash
-pkill -9 claude_monitor && ~/.claude/monitor/build.sh
+pkill -9 agent_monitor && ~/.claude/monitor/build.sh
 ```
 
 If compilation fails, make sure Xcode Command Line Tools are installed:
@@ -79,9 +79,9 @@ xcode-select --install
 
 Reset the saved position:
 ```bash
-defaults delete claude_monitor monitorX
-defaults delete claude_monitor monitorY
-pkill claude_monitor && ~/.claude/monitor/build.sh
+defaults delete agent_monitor monitorX
+defaults delete agent_monitor monitorY
+pkill agent_monitor && ~/.claude/monitor/build.sh
 ```
 
 It will reappear in the top-right corner.
@@ -127,10 +127,10 @@ Also verify `monitor_permission.py` exists at `~/.claude/hooks/monitor_permissio
 The monitor app communicates with the Python hook via a Unix socket at `~/.claude/monitor/monitor.sock`. Check:
 
 1. **Socket exists** — `ls -la ~/.claude/monitor/monitor.sock` (created when the monitor app launches)
-2. **Monitor app is running** — `pgrep -l claude_monitor`
-3. **Restart the app** — `pkill -9 claude_monitor && ~/.claude/monitor/build.sh`
+2. **Monitor app is running** — `pgrep -l agent_monitor`
+3. **Restart the app** — `pkill -9 agent_monitor && ~/.claude/monitor/build.sh`
 
-If the socket doesn't exist, the monitor app failed to start its socket server. Check Console.app for `[ClaudeMonitor]` log messages.
+If the socket doesn't exist, the monitor app failed to start its socket server. Check Console.app for `[AgentMonitor]` log messages.
 
 ## Permission falls through to terminal dialog
 
@@ -179,14 +179,14 @@ The Anthropic API returned HTTP 429. This is normal if you've been opening the u
 
 ## macOS Keychain keeps prompting for access
 
-When `claude_monitor` first reads your Claude Code credentials from the Keychain, macOS shows a permission dialog. Click **Always Allow** to grant permanent access.
+When `agent_monitor` first reads your Claude Code credentials from the Keychain, macOS shows a permission dialog. Click **Always Allow** to grant permanent access.
 
 If you accidentally clicked "Deny":
 
 1. Open **Keychain Access.app**
 2. Search for "Claude Code-credentials"
 3. Double-click the entry → **Access Control** tab
-4. Add `claude_monitor` to the allowed applications list (or click "Allow All Applications")
+4. Add `agent_monitor` to the allowed applications list (or click "Allow All Applications")
 5. Save changes
 
 The app caches the token in memory after the first successful read, so the Keychain is only accessed when:
@@ -200,10 +200,10 @@ The chevron toggle (▶/▼) next to "Claude" in the header collapses and expand
 
 1. Check if the state is persisted incorrectly:
    ```bash
-   defaults read claude_monitor monitorExpanded
+   defaults read agent_monitor monitorExpanded
    ```
 2. Reset it:
    ```bash
-   defaults delete claude_monitor monitorExpanded
-   pkill claude_monitor && ~/.claude/monitor/build.sh
+   defaults delete agent_monitor monitorExpanded
+   pkill agent_monitor && ~/.claude/monitor/build.sh
    ```
