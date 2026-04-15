@@ -4,8 +4,14 @@ import Combine
 import Security
 
 final class AppInstanceLock {
-    private let lockFilePath = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent(".claude/monitor/claude_monitor.lock").path
+    private let lockFilePath: String = {
+        let fileManager = FileManager.default
+        let baseDirectory = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? fileManager.temporaryDirectory
+        return baseDirectory
+            .appendingPathComponent("ClaudeMonitor", isDirectory: true)
+            .appendingPathComponent("claude_monitor.lock").path
+    }()
     private var lockFd: Int32 = -1
 
     func acquire() -> Bool {
@@ -2317,7 +2323,7 @@ struct SessionRowView: View {
                 }
             }
         }
-        .padding(.horizontal, 12)
+        .padding(.leading, 15)
         .padding(.vertical, 6)
         .onHover { isHovered = $0 }
     }
@@ -3377,6 +3383,7 @@ struct SkinAwareBackground: View {
             VisualEffectView(
                 material: skin.material,
                 blendingMode: .behindWindow,
+                cornerRadius: skin.cornerRadius,
                 blurAlpha: CGFloat(glassConfig.blur),
                 fillOpacity: CGFloat(glassConfig.opacity),
                 tintColor: NSColor(
@@ -3454,7 +3461,7 @@ struct MonitorContentView: View {
                             if session.id != reader.sessions.last?.id {
                                 Divider()
                                     .background(skin.colors.divider.opacity(0.5))
-                                    .padding(.horizontal, 12)
+                                    .padding(.leading, 15)
                             }
                         }
                     }
@@ -3555,32 +3562,53 @@ struct ScrollbarStyler: NSViewRepresentable {
 
 // MARK: - NSVisualEffectView wrapper
 
+final class RoundedVisualEffectNSView: NSVisualEffectView {
+    var cornerRadius: CGFloat = 0 {
+        didSet { updateCornerMask() }
+    }
+
+    override func layout() {
+        super.layout()
+        updateCornerMask()
+    }
+
+    private func updateCornerMask() {
+        wantsLayer = true
+        layer?.backgroundColor = .clear
+        layer?.cornerRadius = cornerRadius
+        layer?.cornerCurve = .continuous
+        layer?.masksToBounds = true
+    }
+}
+
 struct VisualEffectView: NSViewRepresentable {
     let material: NSVisualEffectView.Material
     let blendingMode: NSVisualEffectView.BlendingMode
+    let cornerRadius: CGFloat
     var blurAlpha: CGFloat = 1.0
     var fillOpacity: CGFloat = 0.5
     var tintColor: NSColor? = nil
 
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let view = NSVisualEffectView()
+    func makeNSView(context: Context) -> RoundedVisualEffectNSView {
+        let view = RoundedVisualEffectNSView()
         view.material = material
         view.blendingMode = blendingMode
         view.state = .active
         view.appearance = NSAppearance(named: .darkAqua)
-        view.wantsLayer = true
+        view.cornerRadius = cornerRadius
         // Defer so internal sublayers are created
         DispatchQueue.main.async { self.configureLayers(view) }
         return view
     }
 
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+    func updateNSView(_ nsView: RoundedVisualEffectNSView, context: Context) {
         nsView.material = material
         nsView.blendingMode = blendingMode
+        nsView.cornerRadius = cornerRadius
         configureLayers(nsView)
     }
 
-    private func configureLayers(_ view: NSVisualEffectView) {
+    private func configureLayers(_ view: RoundedVisualEffectNSView) {
         guard let layer = view.layer else { return }
 
         // Adjust the internal "fill" layer opacity — this controls
@@ -3614,6 +3642,11 @@ struct VisualEffectView: NSViewRepresentable {
             tintLayer.compositingFilter = "softLight"
             layer.addSublayer(tintLayer)
         }
+
+        view.layer?.backgroundColor = .clear
+        view.layer?.cornerRadius = cornerRadius
+        view.layer?.cornerCurve = .continuous
+        view.layer?.masksToBounds = true
     }
 }
 
@@ -3671,6 +3704,12 @@ class ClickHostingView<Content: View>: NSHostingView<Content> {
         // Corner radius is set externally via updateCornerRadius() to match the active skin.
         wantsLayer = true
         layer?.backgroundColor = .clear
+        superview?.wantsLayer = true
+        superview?.layer?.backgroundColor = .clear
+        window?.isOpaque = false
+        window?.backgroundColor = .clear
+        window?.contentView?.wantsLayer = true
+        window?.contentView?.layer?.backgroundColor = .clear
     }
 }
 
