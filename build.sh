@@ -99,7 +99,15 @@ fi
 
 # Kill existing instance if running
 pkill -f "claude_monitor$" 2>/dev/null || true
-sleep 0.5
+
+# Wait briefly for the previous instance to release its singleton lock so the
+# fresh launch doesn't bounce as a duplicate during restart.
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+    if ! pgrep -f "claude_monitor$" >/dev/null 2>&1; then
+        break
+    fi
+    sleep 0.2
+done
 
 # Launch
 echo "Launching Claude Monitor..."

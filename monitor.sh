@@ -85,6 +85,30 @@ detect_terminal() {
     echo "$term_app|$term_session_id"
 }
 
+ensure_monitor_running() {
+    local binary="$MONITOR_DIR/claude_monitor"
+    [ -x "$binary" ] || return 0
+    pgrep -f "/\.claude/monitor/claude_monitor\$" >/dev/null 2>&1 && return 0
+
+    local lockdir="$MONITOR_DIR/.relaunch.lock"
+    # Clear stale lock (>10s old) left behind by a crashed relauncher
+    if [ -d "$lockdir" ]; then
+        local lock_age
+        lock_age=$(( $(date +%s) - $(stat -f %m "$lockdir" 2>/dev/null || echo 0) ))
+        [ "$lock_age" -gt 10 ] && rmdir "$lockdir" 2>/dev/null
+    fi
+
+    if mkdir "$lockdir" 2>/dev/null; then
+        (
+            "$binary" </dev/null >/dev/null 2>&1 &
+            disown 2>/dev/null || true
+            sleep 3
+            rmdir "$lockdir" 2>/dev/null
+        ) </dev/null >/dev/null 2>&1 &
+        disown 2>/dev/null || true
+    fi
+}
+
 play_say_with_volume() {
     local msg="$1"
     local voice="$2"
@@ -304,6 +328,9 @@ create_session() {
         done
     fi
 }
+
+# --- Self-heal: relaunch the UI panel if it's not running ---
+ensure_monitor_running
 
 # --- Handle events ---
 case "$EVENT" in

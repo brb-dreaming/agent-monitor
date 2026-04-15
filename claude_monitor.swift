@@ -3,6 +3,47 @@ import SwiftUI
 import Combine
 import Security
 
+final class AppInstanceLock {
+    private let lockFilePath = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent(".claude/monitor/claude_monitor.lock").path
+    private var lockFd: Int32 = -1
+
+    func acquire() -> Bool {
+        let lockDir = URL(fileURLWithPath: lockFilePath).deletingLastPathComponent()
+        try? FileManager.default.createDirectory(at: lockDir, withIntermediateDirectories: true)
+
+        let fd = open(lockFilePath, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)
+        guard fd >= 0 else {
+            NSLog("[ClaudeMonitor] Singleton: failed to open lock file")
+            return true
+        }
+
+        guard flock(fd, LOCK_EX | LOCK_NB) == 0 else {
+            let lockErrno = errno
+            Darwin.close(fd)
+            if lockErrno == EWOULDBLOCK {
+                return false
+            }
+            NSLog("[ClaudeMonitor] Singleton: flock failed: %d", lockErrno)
+            return true
+        }
+
+        lockFd = fd
+        let pidLine = "\(getpid())\n"
+        _ = ftruncate(fd, 0)
+        _ = pidLine.withCString { ptr in
+            Darwin.write(fd, ptr, strlen(ptr))
+        }
+        return true
+    }
+
+    func release() {
+        guard lockFd >= 0 else { return }
+        Darwin.close(lockFd)
+        lockFd = -1
+    }
+}
+
 // MARK: - Skin System
 
 struct SkinColors {
@@ -3653,11 +3694,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var panel: FloatingPanel!
     let reader = SessionReader()
     let configManager = ConfigManager()
+    let instanceLock = AppInstanceLock()
     var usageFetcher: UsageFetcher!
     var sizeObserver: AnyCancellable?
     var skinObserver: AnyCancellable?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        guard instanceLock.acquire() else {
+            NSLog("[ClaudeMonitor] Singleton: another instance is already running")
+            NSApp.terminate(nil)
+            return
+        }
+
         NSApp.setActivationPolicy(.accessory)
 
         usageFetcher = UsageFetcher(enabled: configManager.usageEnabled)
@@ -3733,6 +3781,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             panel.orderFrontRegardless()
         }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        instanceLock.release()
     }
 
     private func updateCornerRadius() {
