@@ -214,5 +214,5 @@ Then remove the six hook entries (`SessionStart`, `UserPromptSubmit`, `Stop`, `N
 ---
 
 <div align="center">
-<sub>Built with AI agents. Obviously.</sub>
+<sub>Built with Claude, naturally.</sub>
 </div>
