@@ -1,12 +1,15 @@
 #!/bin/bash
 # ~/.claude/monitor/build.sh
-# Compile and launch Claude Monitor floating panel
+# Compile and launch Agent Monitor floating panel
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SWIFT_FILE="$SCRIPT_DIR/claude_monitor.swift"
-BINARY="$SCRIPT_DIR/claude_monitor"
+SWIFT_FILE="$SCRIPT_DIR/agent_monitor.swift"
+BINARY="$SCRIPT_DIR/agent_monitor"
+
+# Clean up pre-rename binary if present so stale processes can't sneak in
+rm -f "$SCRIPT_DIR/claude_monitor"
 
 # Check dependencies
 if ! command -v swiftc >/dev/null 2>&1; then
@@ -21,7 +24,7 @@ if ! command -v jq >/dev/null 2>&1; then
     exit 1
 fi
 
-echo "Compiling Claude Monitor..."
+echo "Compiling Agent Monitor..."
 swiftc "$SWIFT_FILE" \
     -O \
     -o "$BINARY" \
@@ -40,8 +43,8 @@ fi
 
 echo "Build successful."
 
-if [ "${CLAUDE_MONITOR_BUILD_ONLY:-0}" = "1" ]; then
-    echo "Skipping restart (CLAUDE_MONITOR_BUILD_ONLY=1)."
+if [ "${AGENT_MONITOR_BUILD_ONLY:-${CLAUDE_MONITOR_BUILD_ONLY:-0}}" = "1" ]; then
+    echo "Skipping restart (AGENT_MONITOR_BUILD_ONLY=1)."
     exit 0
 fi
 
@@ -97,21 +100,22 @@ if [ ! -f "$VOICE_CACHE_DIR/phrases.json" ] && [ -f "$SCRIPT_DIR/phrases.json" ]
     echo "Created phrases.json in $VOICE_CACHE_DIR"
 fi
 
-# Kill existing instance if running
+# Kill existing instance if running (handles both new and legacy binary names)
+pkill -f "agent_monitor$" 2>/dev/null || true
 pkill -f "claude_monitor$" 2>/dev/null || true
 
 # Wait briefly for the previous instance to release its singleton lock so the
 # fresh launch doesn't bounce as a duplicate during restart.
 for _ in 1 2 3 4 5 6 7 8 9 10; do
-    if ! pgrep -f "claude_monitor$" >/dev/null 2>&1; then
+    if ! pgrep -f "agent_monitor$|claude_monitor$" >/dev/null 2>&1; then
         break
     fi
     sleep 0.2
 done
 
 # Launch
-echo "Launching Claude Monitor..."
+echo "Launching Agent Monitor..."
 "$BINARY" &
 disown 2>/dev/null
 
-echo "Claude Monitor is running."
+echo "Agent Monitor is running."

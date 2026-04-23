@@ -165,7 +165,7 @@ The usage feature requires an OAuth token from Claude Code. It reads credentials
 1. `~/.claude/.credentials.json` (if it exists)
 2. macOS Keychain — service `Claude Code-credentials`
 
-The token is **cached in memory** after the first read. The Keychain is only accessed again when the token approaches expiry. On the first access, macOS will prompt you to allow `claude_monitor` to read the credential — click **Always Allow** to avoid future prompts.
+The token is **cached in memory** after the first read. The Keychain is only accessed again when the token approaches expiry. On the first access, macOS will prompt you to allow `agent_monitor` to read the credential — click **Always Allow** to avoid future prompts.
 
 If you see "No credentials", make sure you're logged in to Claude Code via OAuth (`claude login`).
 

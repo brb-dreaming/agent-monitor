@@ -164,17 +164,28 @@ def main() -> int:
     if not event or event.get("type") != "agent-turn-complete":
         return 0
 
-    monitor_dir = Path(os.environ.get("CLAUDE_MONITOR_DIR", str(Path.home() / ".claude" / "monitor")))
+    monitor_dir = Path(
+        os.environ.get("AGENT_MONITOR_DIR")
+        or os.environ.get("CLAUDE_MONITOR_DIR")
+        or str(Path.home() / ".claude" / "monitor")
+    )
     sessions_dir = monitor_dir / "sessions"
     thread_id = str(event.get("thread-id") or "").strip()
-    cwd = str(event.get("cwd") or os.environ.get("CLAUDE_MONITOR_CWD", "")).strip()
+    cwd = str(
+        event.get("cwd")
+        or os.environ.get("AGENT_MONITOR_CWD")
+        or os.environ.get("CLAUDE_MONITOR_CWD", "")
+    ).strip()
     input_messages = event.get("input-messages")
     prompt = ""
     if isinstance(input_messages, list) and input_messages:
         prompt = truncate(str(input_messages[0]).strip())
     session_id = choose_session_id(
         sessions_dir=sessions_dir,
-        session_id=str(os.environ.get("CLAUDE_MONITOR_SESSION_ID", "")).strip(),
+        session_id=str(
+            os.environ.get("AGENT_MONITOR_SESSION_ID")
+            or os.environ.get("CLAUDE_MONITOR_SESSION_ID", "")
+        ).strip(),
         cwd=cwd,
         thread_id=thread_id,
     )
@@ -190,11 +201,11 @@ def main() -> int:
     if monitor_hook.exists():
         payload = json.dumps({"session_id": session_id, "cwd": cwd})
         env = dict(os.environ)
-        env["CLAUDE_MONITOR_AGENT"] = "codex"
+        env["AGENT_MONITOR_AGENT"] = "codex"
         if thread_id:
-            env["CLAUDE_MONITOR_THREAD_ID"] = thread_id
+            env["AGENT_MONITOR_THREAD_ID"] = thread_id
         if should_autoclean:
-            env["CLAUDE_MONITOR_AUTOCLEAN_DONE"] = "1"
+            env["AGENT_MONITOR_AUTOCLEAN_DONE"] = "1"
         subprocess.run(
             [str(monitor_hook), "Stop"],
             input=payload,

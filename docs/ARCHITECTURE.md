@@ -1,14 +1,14 @@
 # Architecture
 
-Technical deep-dive into how Claude Monitor works.
+Technical deep-dive into how Agent Monitor works.
 
 ## Overview
 
-Claude Monitor has three components: a **bash hook script** for session lifecycle events, a **Python hook script** for permission granting, and a **SwiftUI app** that displays the floating panel.
+Agent Monitor has three components: a **bash hook script** for session lifecycle events, a **Python hook script** for permission granting, and a **SwiftUI app** that displays the floating panel.
 
 ```
 ┌─────────────────────┐     JSON files      ┌────────────────────┐
-│  monitor.sh (hook)  │ ──────────────────── │  claude_monitor    │
+│  monitor.sh (hook)  │ ──────────────────── │  agent_monitor    │
 │                     │   ~/.claude/monitor  │  (SwiftUI app)     │
 │  - Lifecycle events │   /sessions/{id}.json│                    │
 │  - Writes session   │                      │  - Polls sessions  │
@@ -129,7 +129,7 @@ If the monitor app isn't running (socket doesn't exist), the Python hook exits s
 
 The hook has a 24-hour timeout (`86400` seconds in settings.json) to allow waiting indefinitely for the user.
 
-## SwiftUI App (`claude_monitor.swift`)
+## SwiftUI App (`agent_monitor.swift`)
 
 Single-file SwiftUI app, compiled to a standalone binary.
 

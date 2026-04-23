@@ -1,9 +1,11 @@
 # Compiled binary
+agent_monitor
 claude_monitor
 
 # Runtime session data
 sessions/
 monitor.sock
+agent_monitor.lock
 claude_monitor.lock
 layer_debug.txt
 codex_notify_chain.json
@@ -13,6 +15,10 @@ reviews/
 
 # macOS
 .DS_Store
+
+# Local-only scratch
+.obsidian/
+logos/
 
 # Live config (personal settings, voice IDs, etc.)
 # config.default.json is the tracked template — copied to config.json on first build

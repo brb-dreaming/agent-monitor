@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Claude Monitor — PermissionRequest hook via Unix domain socket.
+Agent Monitor — PermissionRequest hook via Unix domain socket.
 Connects to the monitor app's socket, sends permission details,
 blocks until the app responds with allow/deny, then outputs JSON.
 """
@@ -117,7 +117,7 @@ def main():
                 "hookEventName": "PermissionRequest",
                 "decision": {
                     "behavior": "deny",
-                    "message": "Denied from Claude Monitor",
+                    "message": "Denied from Agent Monitor",
                 },
             }
         }

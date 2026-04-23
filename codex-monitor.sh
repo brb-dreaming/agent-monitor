@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-MONITOR_DIR="${CLAUDE_MONITOR_DIR:-$HOME/.claude/monitor}"
+MONITOR_DIR="${AGENT_MONITOR_DIR:-$HOME/.claude/monitor}"
 HOOKS_DIR="$HOME/.claude/hooks"
 MONITOR_HOOK="$HOOKS_DIR/monitor.sh"
 NOTIFIER="$HOOKS_DIR/codex_notify.py"
@@ -34,7 +34,7 @@ if [ ! -f "$NOTIFIER" ]; then
     exit 1
 fi
 
-SESSION_ID="${CLAUDE_MONITOR_SESSION_ID:-codex-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
+SESSION_ID="${AGENT_MONITOR_SESSION_ID:-codex-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
 CWD=$(pwd -P)
 PROMPT_TEXT=""
 REGISTERED_SESSION=0
@@ -45,10 +45,10 @@ if [ "${1:-}" = "exec" ] && [ $# -gt 1 ]; then
     PROMPT_TEXT="${PROMPT_TEXT% }"
 fi
 
-export CLAUDE_MONITOR_AGENT="codex"
-export CLAUDE_MONITOR_SESSION_ID="$SESSION_ID"
-export CLAUDE_MONITOR_CWD="$CWD"
-export CLAUDE_MONITOR_DIR="$MONITOR_DIR"
+export AGENT_MONITOR_AGENT="codex"
+export AGENT_MONITOR_SESSION_ID="$SESSION_ID"
+export AGENT_MONITOR_CWD="$CWD"
+export AGENT_MONITOR_DIR="$MONITOR_DIR"
 
 cleanup() {
     if [ "$CLEANED_UP" -eq 1 ]; then

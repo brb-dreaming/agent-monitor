@@ -11,7 +11,8 @@ from typing import List, Optional, Tuple, Union
 
 HOME = Path.home()
 CONFIG_PATH = HOME / ".codex" / "config.toml"
-BACKUP_PATH = HOME / ".codex" / "config.toml.claude-monitor.bak"
+BACKUP_PATH = HOME / ".codex" / "config.toml.agent-monitor.bak"
+LEGACY_BACKUP_PATH = HOME / ".codex" / "config.toml.claude-monitor.bak"
 CHAIN_PATH = HOME / ".claude" / "monitor" / "codex_notify_chain.json"
 HOOK_NOTIFY = ["python3", str(HOME / ".claude" / "hooks" / "codex_notify.py")]
 Command = Union[List[str], str]
@@ -252,7 +253,7 @@ def main() -> int:
     if existing_chain is not None and preserved_command is None and is_self_command(existing_chain):
         preserved_command = None
 
-    if original and not BACKUP_PATH.exists():
+    if original and not BACKUP_PATH.exists() and not LEGACY_BACKUP_PATH.exists():
         shutil.copy2(CONFIG_PATH, BACKUP_PATH)
 
     write_chain_config(preserved_command)

@@ -1,6 +1,6 @@
 # Voice Setup
 
-Claude Monitor speaks out loud when sessions finish or need attention. Voice works out of the box with macOS built-in speech -- no setup required.
+Agent Monitor speaks out loud when sessions finish or need attention. Voice works out of the box with macOS built-in speech -- no setup required.
 
 ## Providers
 

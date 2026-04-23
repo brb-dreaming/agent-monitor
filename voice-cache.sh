@@ -32,7 +32,7 @@ play_say_with_volume() {
 
     (
         local temp_audio
-        temp_audio=$(mktemp -t claude_monitor_voice_cache_say) || exit 1
+        temp_audio=$(mktemp -t agent_monitor_voice_cache_say) || exit 1
         if say -v "$voice" -r "$rate" -o "$temp_audio" -- "$msg"; then
             afplay -v "$volume" "$temp_audio"
         fi
