@@ -16,6 +16,10 @@ reviews/
 # macOS
 .DS_Store
 
+# Local-only scratch
+.obsidian/
+logos/
+
 # Live config (personal settings, voice IDs, etc.)
 # config.default.json is the tracked template — copied to config.json on first build
 config.json
