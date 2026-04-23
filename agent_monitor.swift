@@ -2268,7 +2268,7 @@ struct SessionRowView: View {
             .alignmentGuide(.firstTextBaseline) { d in d[VerticalAlignment.center] + 2 }
 
             VStack(alignment: .leading, spacing: 1) {
-                HStack(spacing: 6) {
+                HStack(spacing: 5) {
                     Text(session.project)
                         .font(.system(size: 12, weight: .semibold, design: skin.fontDesign))
                         .foregroundColor(session.isStale ? skin.colors.sessionTitleStale : skin.colors.sessionTitle)
@@ -3169,12 +3169,15 @@ struct HeaderBar: View {
                         .font(.system(size: 11, weight: .semibold, design: skin.headerFontDesign))
                         .foregroundColor(skin.colors.headerText)
                         .opacity(0.65)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                 }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .layoutPriority(0)
 
-            Spacer()
+            Spacer(minLength: 8)
 
             HStack(spacing: 8) {
                 if attentionCount > 0 {
@@ -3183,7 +3186,10 @@ struct HeaderBar: View {
                         Text("\(attentionCount)")
                             .font(.system(size: 10, weight: .medium, design: .monospaced))
                             .foregroundColor(skin.colors.attention)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
                     }
+                    .fixedSize(horizontal: true, vertical: false)
                 }
                 if workingCount > 0 {
                     HStack(spacing: 3) {
@@ -3191,7 +3197,10 @@ struct HeaderBar: View {
                         Text("\(workingCount)")
                             .font(.system(size: 10, weight: .medium, design: .monospaced))
                             .foregroundColor(skin.colors.working)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
                     }
+                    .fixedSize(horizontal: true, vertical: false)
                 }
                 if doneCount > 0 {
                     HStack(spacing: 3) {
@@ -3199,12 +3208,17 @@ struct HeaderBar: View {
                         Text("\(doneCount)")
                             .font(.system(size: 10, weight: .medium, design: .monospaced))
                             .foregroundColor(skin.colors.done)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
                     }
+                    .fixedSize(horizontal: true, vertical: false)
                 }
 
                 Text("\(sessions.count)")
                     .font(.system(size: 10, design: .monospaced))
                     .foregroundColor(skin.colors.timestamp)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
 
                 if configManager.usageEnabled {
                     Button {
@@ -3238,6 +3252,7 @@ struct HeaderBar: View {
                 .buttonStyle(.plain)
                 .background(MonitorPopoverAnchorReader(kind: .settings))
             }
+            .layoutPriority(1)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
